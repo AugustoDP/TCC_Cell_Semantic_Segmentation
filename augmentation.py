@@ -15,7 +15,7 @@ images_to_generate=1000
 
 
 images_path="/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01" #path to original images
-masks_path = "/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST"
+masks_path = "/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG"
 
 
 img_augmented_path="/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_AUG" # path to store aumented images
@@ -48,19 +48,20 @@ for i in range(0, images_to_generate):
     image = images[i % len(images)]
     mask = masks[i % len(images)]
     print(image, mask)
-    original_image = io.imread(image)
-    original_mask = io.imread(mask)
+    original_image = cv2.imread(image, cv2.IMREAD_UNCHANGED)
+    original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+    original_mask = cv2.imread(mask, cv2.IMREAD_UNCHANGED)
+    original_mask = cv2.cvtColor(original_mask, cv2.COLOR_BGR2RGB)
     
     augmented = aug(image=original_image, mask=original_mask)
     transformed_image = augmented['image']
     transformed_mask = augmented['mask']
 
      
-    os.chdir(images_path)   
+ 
     new_image_name = "augmented_image_%s.png" %(i)
-    os.chdir(masks_path)   
     new_mask_name = "augmented_mask_%s.png" %(i)
+    os.chdir(img_augmented_path)  
     cv2.imwrite(new_image_name, transformed_image)
+    os.chdir(msk_augmented_path)   
     cv2.imwrite(new_mask_name, transformed_mask)
-    i =i+1
-    
