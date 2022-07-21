@@ -40,7 +40,7 @@ for directory_path in glob.glob("/content/TCC_Cell_Semantic_Segmentation/DIC-C2D
     for img_path in glob.glob(os.path.join(directory_path, "*.png")):
         #print(img_path)
         img = cv2.imread(img_path, cv2.IMREAD_COLOR)       
-        #img = cv2.resize(img, (SIZE_Y, SIZE_X))
+        img = cv2.resize(img, (SIZE_Y, SIZE_X))
         #img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         train_images.append(img)
         #train_labels.append(label)
@@ -52,7 +52,7 @@ train_masks = []
 for directory_path in glob.glob("/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST_AUG"):
     for mask_path in glob.glob(os.path.join(directory_path, "*.png")):
         mask = cv2.imread(mask_path, 0)       
-        #mask = cv2.resize(mask, (SIZE_Y, SIZE_X))
+        mask = cv2.resize(mask, (SIZE_Y, SIZE_X))
         #mask = cv2.cvtColor(mask, cv2.COLOR_RGB2BGR)
         train_masks.append(mask)
         #train_labels.append(label)
@@ -82,7 +82,7 @@ print(model.summary())
 history=model.fit(x_train, 
           y_train,
           batch_size=32, 
-          epochs=1000,
+          epochs=15,
           verbose=1,
           validation_data=(x_val, y_val))
 
@@ -101,22 +101,32 @@ plt.ylabel('Loss')
 plt.legend()
 plt.show()
 
-model.save('membrane.h5')
 os.chdir(results_path)
 
+model.save('/content/TCC_Cell_Semantic_Segmentation/modelUNET.h5')
+
+
 from tensorflow import keras
-model = keras.models.load_model('membrane.h5', compile=False)
+model = keras.models.load_model('/content/TCC_Cell_Semantic_Segmentation/modelUNET.h5', compile=False)
+
 #Test on a different image
 #READ EXTERNAL IMAGE...
 test_img = cv2.imread('/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02/t000.tif', cv2.IMREAD_UNCHANGED)       
-#test_img = cv2.resize(test_img, (SIZE_Y, SIZE_X))
+test_img = cv2.resize(test_img, (SIZE_Y, SIZE_X))
 test_img = cv2.cvtColor(test_img, cv2.COLOR_BGR2RGB)
+
 test_img = np.expand_dims(test_img, axis=0)
+
+
+prediction = model.predict(test_img)
+
 
 prediction = model.predict(test_img)
 
 #View and Save segmented image
-prediction_image = prediction.reshape(mask.shape)
-plt.imshow(prediction_image, cmap='gray')
+prediction_image = prediction.reshape([256,256,3])
+new_img = cv2.cvtColor(prediction_image, cv2.COLOR_BGR2RGB)
+cv2_imshow(new_img)
+plt.imshow(new_img, cmap='gray')
 output_path = results_path + 'test0_segmented.jpg'
-plt.imsave(output_path, prediction_image, cmap='gray')
+plt.imsave(output_path, new_img, cmap='gray')
