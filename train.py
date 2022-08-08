@@ -35,27 +35,42 @@ SIZE_Y = 256
 
 #Capture training image info as a list
 train_images = []
-
+img_paths = []
 for directory_path in glob.glob("/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_AUG"):
     for img_path in glob.glob(os.path.join(directory_path, "*.png")):
-        #print(img_path)
-        img = cv2.imread(img_path, cv2.IMREAD_COLOR)       
-        img = cv2.resize(img, (SIZE_Y, SIZE_X))
-        #img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        train_images.append(img)
-        #train_labels.append(label)
+        #print(img_path)      
+        img_paths.append(img_path)       
+
+img_paths.sort()
+for img_path in img_paths:
+   img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)       
+   img = cv2.resize(img, (SIZE_Y, SIZE_X))
+   img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+   #img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+   train_images.append(img)
+   #train_labels.append(label)
+
 #Convert list to array for machine learning processing        
 train_images = np.array(train_images)
 
+
 #Capture mask/label info as a list
 train_masks = [] 
+mask_paths = []
+
 for directory_path in glob.glob("/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST_AUG"):
-    for mask_path in glob.glob(os.path.join(directory_path, "*.png")):
-        mask = cv2.imread(mask_path, 0)       
-        mask = cv2.resize(mask, (SIZE_Y, SIZE_X))
-        #mask = cv2.cvtColor(mask, cv2.COLOR_RGB2BGR)
-        train_masks.append(mask)
-        #train_labels.append(label)
+    for mask_path in glob.glob(os.path.join(directory_path, "*.png")):        
+        mask_paths.append(mask_path)       
+
+mask_paths.sort()
+for mask_path in mask_paths:
+    mask = cv2.imread(mask_path, cv2.IMREAD_UNCHANGED)       
+    mask = cv2.resize(mask, (SIZE_Y, SIZE_X))
+    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
+    #mask = cv2.cvtColor(mask, cv2.COLOR_RGB2BGR)
+    train_masks.append(mask)
+    #train_labels.append(label)
+
 #Convert list to array for machine learning processing          
 train_masks = np.array(train_masks)
 
@@ -120,13 +135,10 @@ test_img = np.expand_dims(test_img, axis=0)
 
 prediction = model.predict(test_img)
 
-
-prediction = model.predict(test_img)
-
 #View and Save segmented image
 prediction_image = prediction.reshape([256,256,3])
 new_img = cv2.cvtColor(prediction_image, cv2.COLOR_BGR2RGB)
-cv2_imshow(new_img)
+#cv2_imshow(new_img)
 plt.imshow(new_img, cmap='gray')
 output_path = results_path + 'test0_segmented.jpg'
 plt.imsave(output_path, new_img, cmap='gray')
