@@ -33,6 +33,8 @@ for im in os.listdir(images_path):  # read image name from folder and append its
 for msk in os.listdir(masks_path):  # read image name from folder and append its path into "images" array     
     masks.append(os.path.join(masks_path,msk))
 
+images.sort()
+masks.sort()
 
 aug = A.Compose([
     A.VerticalFlip(p=0.5),              
@@ -47,7 +49,7 @@ aug = A.Compose([
 for i in range(0, images_to_generate):
     image = images[i % len(images)]
     mask = masks[i % len(images)]
-    print(image, mask)
+    #print(image, mask)
     original_image = cv2.imread(image, cv2.IMREAD_UNCHANGED)
     original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
     original_mask = cv2.imread(mask, cv2.IMREAD_UNCHANGED)
@@ -58,9 +60,10 @@ for i in range(0, images_to_generate):
     transformed_mask = augmented['mask']
 
      
- 
-    new_image_name = "augmented_image_%s.png" %(i)
-    new_mask_name = "augmented_mask_%s.png" %(i)
+    image_name = os.path.basename(image)
+    mask_name = os.path.basename(mask)
+    new_image_name = "%s_%s.png" %(image_name[:-4], i)
+    new_mask_name = "%s_%s.png" %(mask_name[:-4], i)
     os.chdir(img_augmented_path)  
     cv2.imwrite(new_image_name, transformed_image)
     os.chdir(msk_augmented_path)   
