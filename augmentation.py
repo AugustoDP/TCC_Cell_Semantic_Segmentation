@@ -46,10 +46,12 @@ def augment(images, masks):
   aug = A.Compose([
       A.VerticalFlip(p=0.5),              
       A.RandomRotate90(p=0.5),
-      A.HorizontalFlip(p=1),
-      A.Transpose(p=1),
-      #A.ElasticTransform(p=1, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-      A.GridDistortion(p=1)
+      A.HorizontalFlip(p=0.5),
+      A.Transpose(p=0.5),
+      #A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
+      A.ElasticTransform(p=0.5, alpha=120, sigma=8, alpha_affine=120 * 0.03),
+      A.GridDistortion(p=0.5),
+      A.InvertImg(p=0.5)
       ]
   )
 
