@@ -10,7 +10,7 @@ from os import path
 from scipy.ndimage import rotate
 
 import albumentations as A
-images_to_generate=1000
+images_to_generate=500
 
 
 
@@ -49,9 +49,11 @@ def augment(images, masks):
       A.HorizontalFlip(p=0.5),
       A.Transpose(p=0.5),
       #A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-      A.ElasticTransform(p=0.5, alpha=120, sigma=8, alpha_affine=120 * 0.03),
       A.GridDistortion(p=0.5),
-      A.InvertImg(p=0.5)
+      A.InvertImg(p=0.5),
+      A.RandomBrightnessContrast(p=0.5),
+      A.Sharpen(p=0.5),
+      #A.RandomCrop(height=50, width=50, p=0.5)
       ]
   )
 
