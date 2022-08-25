@@ -65,8 +65,9 @@ def augment(images, masks):
       original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
       original_mask = cv2.imread(mask, cv2.IMREAD_UNCHANGED)
       original_mask = cv2.cvtColor(original_mask, cv2.COLOR_BGR2RGB)
+      ret, new_mask = cv2.threshold(original_mask, 1, 1, cv2.THRESH_BINARY)
       
-      augmented = aug(image=original_image, mask=original_mask)
+      augmented = aug(image=original_image, mask=new_mask)
       transformed_image = augmented['image']
       transformed_mask = augmented['mask']
 
