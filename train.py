@@ -7,6 +7,7 @@ from os import path
 import numpy as np
 from matplotlib import pyplot as plt
 import albumentations as A
+from sklearn.model_selection import train_test_split
 from utils import (
   save_checkpoint,
   load_checkpoint,
@@ -25,10 +26,44 @@ LOSS = sm.losses.binary_crossentropy
 METRICS = sm.metrics.iou_score
 BACKBONE = 'resnet34'
 ENCODER_WEIGHTS = 'imagenet'
+IMAGES_TO_GENERATE = 500
+VALIDATION_SPLIT = 0.2
 
 
-def train_fn(loader, model, optimizer, loss_fn, scaler):
-  pass
+
+def train_fn(loader, model):
+  preprocess_input = sm.get_preprocessing(BACKBONE)
+
+  X, Y = loader.__get_img_mask_list__(height=IMAGE_HEIGHT, width=IMAGE_WIDTH)
+  Y = np.expand_dims(Y, axis=3) #May not be necessary.. leftover from previous code 
+
+  
+  x_train, x_val, y_train, y_val = train_test_split(X, Y, test_size=VALIDATION_SPLIT, random_state=42)
+  # preprocess input
+  x_train = preprocess_input(x_train)
+  x_val = preprocess_input(x_val)
+
+  print(model.summary())
+  history=model.fit(x_train, 
+            y_train,
+            batch_size=BATCH_SIZE, 
+            epochs=EPOCHS,
+            verbose=1,
+            validation_data=(x_val, y_val))
+
+  #accuracy = model.evaluate(x_val, y_val)
+  #plot the training and validation accuracy and loss at each epoch
+  loss = history.history['loss']
+  val_loss = history.history['val_loss']
+  epochs = range(1, len(loss) + 1)
+  plt.plot(epochs, loss, 'y', label='Training loss')
+  plt.plot(epochs, val_loss, 'r', label='Validation loss')
+  plt.title('Training and validation loss')
+  plt.xlabel('Epochs')
+  plt.ylabel('Loss')
+  plt.legend()
+  plt.show()
+
 
 
 def main():
@@ -43,15 +78,28 @@ def main():
       A.InvertImg(p=0.5),
       A.RandomBrightnessContrast(p=0.5),
       A.Sharpen(p=0.5),
-      A.Normalize(
-        mean=[0.0, 0.0, 0.0],
-        std=[1.0, 1.0, 1.0],
-        max_pixel_value=255.0,
-      ),
+      #A.Normalize(
+      #  mean=[0.0, 0.0, 0.0],
+      #  std=[1.0, 1.0, 1.0],
+      #  max_pixel_value=255.0,
+      #),
       #A.RandomCrop(height=50, width=50, p=0.5)
       ]
   )
 
+  train_ds = get_loaders(
+      TRAIN_IMG_DIRS,
+      TRAIN_MASK_DIRS,
+      BATCH_SIZE,
+      train_transform,
+      )
+  train_ds.__apply__(IMAGES_TO_GENERATE)
+  train_ds.__read_augmented__()
+  model = sm.Unet(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=1)
+  model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
+  train_fn(train_ds, model)
+
 
 if __name__ == "__main__":
   main()
+
