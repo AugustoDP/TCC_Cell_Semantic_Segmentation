@@ -113,6 +113,7 @@ def main():
   model = sm.Unet(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=1)
   model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
   model = train_fn(train_ds, model)
+  save_model = os.path.join(RESULTS_PATH, 'modelUNET.h5')
   save_checkpoint(model, RESULTS_PATH)
   predict(model, TEST_IMG)
 
