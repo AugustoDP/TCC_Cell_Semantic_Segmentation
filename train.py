@@ -14,8 +14,8 @@ from utils import (
   get_loaders,
 )
 
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
+TRAIN_IMG_DIRS = '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01'
+TRAIN_MASK_DIRS = '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG'
 BATCH_SIZE = 32
 EPOCHS = 75
 LOAD_MODEL = False
@@ -28,7 +28,8 @@ BACKBONE = 'resnet34'
 ENCODER_WEIGHTS = 'imagenet'
 IMAGES_TO_GENERATE = 500
 VALIDATION_SPLIT = 0.2
-
+TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02/t000.tif'
+RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/Results" # path to store model results
 
 
 def train_fn(loader, model):
@@ -63,7 +64,20 @@ def train_fn(loader, model):
   plt.ylabel('Loss')
   plt.legend()
   plt.show()
+  return model
 
+def predict(model, image_path):
+  image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)       
+  image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
+  image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+  prediction = model.predict(image)
+  #View and Save segmented image
+  prediction_image = prediction.reshape([256,256,1])
+  new_img = cv2.cvtColor(prediction_image, cv2.COLOR_BGR2RGB)
+  plt.imshow(new_img, cmap='gray')
+  prediction_image_name = 'test_' + os.path.basename(image_path) 
+  output_path = os.path.join(RESULTS_PATH, prediction_image_name)
+  plt.imsave(output_path, new_img, cmap='gray')
 
 
 def main():
@@ -86,7 +100,8 @@ def main():
       #A.RandomCrop(height=50, width=50, p=0.5)
       ]
   )
-
+  if os.path.exists(RESULTS_PATH) == False:
+    os.mkdir(RESULTS_PATH)
   train_ds = get_loaders(
       TRAIN_IMG_DIRS,
       TRAIN_MASK_DIRS,
@@ -97,7 +112,9 @@ def main():
   train_ds.__read_augmented__()
   model = sm.Unet(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=1)
   model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
-  train_fn(train_ds, model)
+  model = train_fn(train_ds, model)
+  save_checkpoint(model, RESULTS_PATH)
+  predict(model, TEST_IMG)
 
 
 if __name__ == "__main__":

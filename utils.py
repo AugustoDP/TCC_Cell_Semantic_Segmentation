@@ -4,13 +4,13 @@ from tensorflow import keras
 
 
 
-def save_checkpoint(state, filename='modelUNET.h5'):
+def save_checkpoint(state, filepath):
   print("=> Saving checkpoint")
-  state.save(filename)
+  state.save(filepath)
 
-def load_checkpoint(checkpoint, model):
+def load_checkpoint(checkpoint, model, load_compile):
   print("=> Loading checkpoint")
-  model = keras.model.load_model(checkpoint)
+  model = keras.model.load_model(checkpoint, compile=load_compile)
 
 
 def get_loaders(

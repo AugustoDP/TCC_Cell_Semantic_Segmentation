@@ -9,8 +9,8 @@ class CellDataset(Dataset):
     self.image_dirs = image_dirs
     self.mask_dirs = mask_dirs
     self.transform = transform
-    self.images = (os.listdir(image_dirs)).sort()
-    self.masks = (os.listdir(mask_dirs)).sort()
+    self.images = os.listdir(image_dirs)
+    self.masks = os.listdir(mask_dirs)
     self.aug_image_dirs = self.image_dirs + "_AUG"
     self.aug_mask_dirs = self.mask_dirs + "_AUG"
     self.aug_images = []
@@ -50,8 +50,8 @@ class CellDataset(Dataset):
       cv2.imwrite(new_mask_name, mask)
   
   def __read_augmented__(self):
-    self.aug_images = (os.listdir(self.aug_image_dirs)).sort()
-    self.aug_masks = (os.listdir(self.aug_mask_dirs)).sort()
+    self.aug_images = os.listdir(self.aug_image_dirs)
+    self.aug_masks = os.listdir(self.aug_mask_dirs)
     self.aug_images.sort()
     self.aug_masks.sort()  
 
