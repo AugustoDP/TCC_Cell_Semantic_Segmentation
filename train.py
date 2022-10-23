@@ -14,10 +14,10 @@ from utils import (
   get_loaders,
 )
 
-TRAIN_IMG_DIRS = '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01'
-TRAIN_MASK_DIRS = '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG'
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
 BATCH_SIZE = 32
-EPOCHS = 75
+EPOCHS = 25
 LOAD_MODEL = False
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
