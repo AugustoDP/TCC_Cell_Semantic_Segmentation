@@ -8,29 +8,31 @@ import numpy as np
 from matplotlib import pyplot as plt
 import albumentations as A
 from sklearn.model_selection import train_test_split
+from keras.utils import to_categorical
 from utils import (
   save_checkpoint,
   load_checkpoint,
   get_loaders,
 )
 
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG']
 BATCH_SIZE = 32
 EPOCHS = 25
 LOAD_MODEL = False
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 OPTIMIZER = 'Adam'
-LOSS = sm.losses.binary_crossentropy
-METRICS = sm.metrics.iou_score
+LOSS = sm.losses.categorical_crossentropy
+METRICS = "accuracy"#sm.metrics.iou_score
 BACKBONE = 'resnet34'
 ENCODER_WEIGHTS = 'imagenet'
-IMAGES_TO_GENERATE = 500
+IMAGES_TO_GENERATE = 300
 VALIDATION_SPLIT = 0.2
-TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02/t000.tif'
-RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/Results" # path to store model results
-
+TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
+RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/Results" # path to store model results
+NUM_CLASSES = 2
+ACTIVATION = "softmax"
 
 def train_fn(loader, model):
   preprocess_input = sm.get_preprocessing(BACKBONE)
@@ -40,6 +42,10 @@ def train_fn(loader, model):
 
   
   x_train, x_val, y_train, y_val = train_test_split(X, Y, test_size=VALIDATION_SPLIT, random_state=42)
+
+  y_train = to_categorical(y_train, num_classes=NUM_CLASSES)
+  y_val = to_categorical(y_val, num_classes=NUM_CLASSES)
+
   # preprocess input
   x_train = preprocess_input(x_train)
   x_val = preprocess_input(x_val)
@@ -110,7 +116,7 @@ def main():
       )
   train_ds.__apply__(IMAGES_TO_GENERATE)
   train_ds.__read_augmented__()
-  model = sm.Unet(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=1)
+  model = sm.Unet(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
   model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
   model = train_fn(train_ds, model)
   save_model = os.path.join(RESULTS_PATH, 'modelUNET.h5')

@@ -35,6 +35,7 @@ class CellDataset(Dataset):
 # (i.e cell A has mask with 1's and 0's, cell B has mask with 2's and 0's...)
   def __apply__(self, images_to_generate):
     for img_dir, mask_dir in zip(self.image_dirs, self.mask_dirs):
+      mask_class = 1
       for index in range(0, images_to_generate):
         img_path = os.path.join(img_dir, self.images[img_dir][index % self.__len__(img_dir)])
         mask_path = os.path.join(mask_dir, self.masks[mask_dir][index % self.__len__(img_dir)])
@@ -44,7 +45,7 @@ class CellDataset(Dataset):
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
         # TODO: Change this part later to threshold to different values for each class of cell
         # (I.E cell A will threshold mask with 1, cell B with 2...)
-        ret, mask = cv2.threshold(mask, 1, 1, cv2.THRESH_BINARY)
+        ret, mask = cv2.threshold(mask, 1, mask_class, cv2.THRESH_BINARY)
 
         if self.transform is not None:
           augmented = self.transform(image=image, mask=mask)
@@ -59,6 +60,7 @@ class CellDataset(Dataset):
         cv2.imwrite(new_image_name, image)
         os.chdir(mask_dir + "_AUG")   
         cv2.imwrite(new_mask_name, mask)
+      mask_class = mask_class + 1
   
   def __read_augmented__(self):
     self.aug_images = {aug_img_dir: os.listdir(aug_img_dir) for aug_img_dir in self.aug_image_dirs}
