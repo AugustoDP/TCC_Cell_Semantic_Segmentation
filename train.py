@@ -76,14 +76,16 @@ def predict(model, image_path):
   image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)       
   image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
   image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+  image = np.expand_dims(image, axis=0)
   prediction = model.predict(image)
-  #View and Save segmented image
-  prediction_image = prediction.reshape([256,256,1])
-  new_img = cv2.cvtColor(prediction_image, cv2.COLOR_BGR2RGB)
-  plt.imshow(new_img, cmap='gray')
-  prediction_image_name = 'test_' + os.path.basename(image_path) 
+  #View and Save segmented image  
+  prediction_image = np.argmax(prediction, axis=3)[0,:,:]
+  #prediction_image = prediction.reshape([256,256])
+  #new_img = cv2.cvtColor(prediction_image, cv2.COLOR_BGR2RGB)
+  plt.imshow(prediction_image, cmap='gray')
+  prediction_image_name = 'test_' + os.path.basename(image_path[:-4]) + '.png' 
   output_path = os.path.join(RESULTS_PATH, prediction_image_name)
-  plt.imsave(output_path, new_img, cmap='gray')
+  plt.imsave(output_path, prediction_image, cmap='gray')
 
 
 def main():
@@ -119,8 +121,8 @@ def main():
   model = sm.Unet(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
   model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
   model = train_fn(train_ds, model)
-  save_model = os.path.join(RESULTS_PATH, 'modelUNET.h5')
-  save_checkpoint(model, RESULTS_PATH)
+  save_model_path = os.path.join(RESULTS_PATH, 'modelUNET.h5')
+  save_checkpoint(model, save_model_path)
   predict(model, TEST_IMG)
 
 
