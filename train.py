@@ -1,5 +1,5 @@
 import tensorflow as tf
-import segmentation_models as sm
+import segmentation_models_pytorch as sm
 import glob
 import cv2
 import os
@@ -23,9 +23,9 @@ LOAD_MODEL = False
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 OPTIMIZER = 'Adam'
-LOSS = sm.losses.categorical_crossentropy
+LOSS = sm.losses.DiceLoss
 METRICS = "accuracy"#sm.metrics.iou_score
-BACKBONE = 'resnet34'
+BACKBONE = 'timm-efficientnet-b0'
 ENCODER_WEIGHTS = 'imagenet'
 IMAGES_TO_GENERATE = 300
 VALIDATION_SPLIT = 0.2
@@ -35,7 +35,7 @@ NUM_CLASSES = 2
 ACTIVATION = "softmax"
 
 def train_fn(loader, model):
-  preprocess_input = sm.get_preprocessing(BACKBONE)
+  preprocess_input = sm.get_preprocessing(BACKBONE, ENCODER_WEIGHTS)
 
   X, Y = loader.__get_img_mask_list__(height=IMAGE_HEIGHT, width=IMAGE_WIDTH)
   Y = np.expand_dims(Y, axis=3) #May not be necessary.. leftover from previous code 
@@ -118,7 +118,7 @@ def main():
       )
   train_ds.__apply__(IMAGES_TO_GENERATE)
   train_ds.__read_augmented__()
-  model = sm.Unet(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
+  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
   model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
   model = train_fn(train_ds, model)
   save_model_path = os.path.join(RESULTS_PATH, 'modelUNET.h5')
