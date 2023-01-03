@@ -14,7 +14,8 @@ from utils import (
   save_checkpoint,
   load_checkpoint,
   get_loaders,
-  add_class_to_image_name
+  add_class_to_image_name,
+  threshold_masks
 )
 
 MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
@@ -35,7 +36,7 @@ ENCODER_WEIGHTS = 'imagenet'
 IMAGES_TO_GENERATE = 300
 VALIDATION_SPLIT = 0.2
 TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
-RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/Results" # path to store model results
+RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store model results
 NUM_CLASSES = 2
 ACTIVATION = "softmax"
 
@@ -121,7 +122,7 @@ def main():
     os.mkdir(MAIN_MASK_DIR)
   add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
-  
+  threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
   # train_ds = get_loaders(
   #     MAIN_IMAGE_DIR,
   #     MAIN_MASK_DIR,
