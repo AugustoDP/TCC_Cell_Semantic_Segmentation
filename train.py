@@ -123,8 +123,8 @@ def main():
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
   
   # train_ds = get_loaders(
-  #     TRAIN_IMG_DIRS,
-  #     TRAIN_MASK_DIRS,
+  #     MAIN_IMAGE_DIR,
+  #     MAIN_MASK_DIR,
   #     BATCH_SIZE,
   #     train_transform,
   #     )

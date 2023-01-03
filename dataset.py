@@ -6,30 +6,48 @@ from torch.utils.data import Dataset
 # TODO: Think about making this more generic and flexible, for now architecture is very
 # stuck, it only works with a certain format of inputs, that's a bad smell
 class CellDataset(Dataset):
-  def __init__(self, image_dirs, mask_dirs, transform=None):
-    self.image_dirs = image_dirs
-    self.mask_dirs = mask_dirs
+  def __init__(self, images_dir, masks_dir, transform=None, classes=None):
+    self.ids = os.listdir(images_dir)
+    self.images_fps = [os.path.join(images_dir, image_id) for image_id in self.ids]
+    self.masks_fps = [os.path.join(masks_dir, image_id) for image_id in self.ids]
     self.transform = transform
-    self.images = {img_dir: os.listdir(img_dir) for img_dir in self.image_dirs} 
-    self.masks = {mask_dir: os.listdir(mask_dir) for mask_dir in self.mask_dirs}
-    self.aug_image_dirs = [img_dir + "_AUG" for img_dir in self.image_dirs]
-    self.aug_mask_dirs = [mask_dir + "_AUG" for mask_dir in self.mask_dirs]
-    self.aug_images = {}
-    self.aug_masks = {}
-    for aug_img_dir in self.aug_image_dirs:
-      if os.path.exists(aug_img_dir) == False:
-        os.mkdir(aug_img_dir)
-    for aug_mask_dir in self.aug_mask_dirs:
-      if os.path.exists(aug_mask_dir) == False:
-        os.mkdir(aug_mask_dir)
-    for img_dir in self.images:
-      self.images[img_dir].sort()
-    for mask_dir in self.masks:
-      self.masks[mask_dir].sort()
+    self.classes = classes
+    self.aug_images_dir = images_dir + "_AUG" 
+    self.aug_masks_dir = masks_dir + "_AUG"
+    self.aug_images = []
+    self.aug_masks = []
+    if os.path.exists(self.aug_images_dir) == False:
+      os.mkdir(self.aug_images_dir)
+    if os.path.exists(self.aug_masks_dir) == False:
+      os.mkdir(self.aug_masks_dir)
 
-  def __len__(self, img_dir):
-    return len(self.images[img_dir])
-
+    # convert str names to class values on masks
+    self.class_values = [self.classes.index(cls) for cls in classes]
+  def __len__(self):
+    return len(self.ids)
+    
+  def __getitem__(self, i):
+          
+          # read data
+          image = cv2.imread(self.images_fps[i])
+          image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+          mask = cv2.imread(self.masks_fps[i], 0)
+          
+          # extract certain classes from mask (e.g. cars)
+          masks = [(mask == v) for v in self.class_values]
+          mask = np.stack(masks, axis=-1).astype('float')
+          
+          # apply augmentations
+          if self.augmentation:
+              sample = self.augmentation(image=image, mask=mask)
+              image, mask = sample['image'], sample['mask']
+          
+          # apply preprocessing
+          if self.preprocessing:
+              sample = self.preprocessing(image=image, mask=mask)
+              image, mask = sample['image'], sample['mask']
+              
+          return image, mask
 # Before reaching augmentations we should first threshold masks properly into different classes
 # According to each cell type, it can be in a simple ascending order
 # (i.e cell A has mask with 1's and 0's, cell B has mask with 2's and 0's...)

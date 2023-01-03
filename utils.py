@@ -1,6 +1,7 @@
 #import tensorflow as tf
 from dataset import CellDataset
 import os
+import cv2
 #from tensorflow import keras
 
 
@@ -36,5 +37,12 @@ def add_class_to_image_name(dataset_names, dir_list, dst_dir):
           dst = f"{dst_dir}/{d_name}_{filename}"
           os.rename(src, dst)
 
+def threshold_masks(dataset_names, mask_dir):
+  for d_name in dataset_names:
+    for mask_fp in os.listdir(mask_dir):
+      if d_name in mask_fp:
+        mask = cv2.imread(mask_fp)
+        ret, mask = cv2.threshold(mask, 1, dataset_names.index(d_name)+1, cv2.THRESH_BINARY)
+        cv2.imwrite(mask_fp, mask)
 
   
