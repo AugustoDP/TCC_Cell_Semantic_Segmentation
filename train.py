@@ -1,4 +1,4 @@
-import tensorflow as tf
+#import tensorflow as tf
 import segmentation_models_pytorch as sm
 import glob
 import cv2
@@ -7,14 +7,19 @@ from os import path
 import numpy as np
 from matplotlib import pyplot as plt
 import albumentations as A
+import torch
 from sklearn.model_selection import train_test_split
-from keras.utils import to_categorical
+#from keras.utils import to_categorical
 from utils import (
   save_checkpoint,
   load_checkpoint,
   get_loaders,
+  add_class_to_image_name
 )
 
+MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
+MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
+DATASET_NAMES = ['Fluo-C2DL-MSC', 'Fluo-N2DH-GOWT1']
 TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01']
 TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG']
 BATCH_SIZE = 32
@@ -43,8 +48,8 @@ def train_fn(loader, model):
   
   x_train, x_val, y_train, y_val = train_test_split(X, Y, test_size=VALIDATION_SPLIT, random_state=42)
 
-  y_train = to_categorical(y_train, num_classes=NUM_CLASSES)
-  y_val = to_categorical(y_val, num_classes=NUM_CLASSES)
+  #y_train = to_categorical(y_train, num_classes=NUM_CLASSES)
+  #y_val = to_categorical(y_val, num_classes=NUM_CLASSES)
 
   # preprocess input
   x_train = preprocess_input(x_train)
@@ -110,20 +115,27 @@ def main():
   )
   if os.path.exists(RESULTS_PATH) == False:
     os.mkdir(RESULTS_PATH)
-  train_ds = get_loaders(
-      TRAIN_IMG_DIRS,
-      TRAIN_MASK_DIRS,
-      BATCH_SIZE,
-      train_transform,
-      )
-  train_ds.__apply__(IMAGES_TO_GENERATE)
-  train_ds.__read_augmented__()
-  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
-  model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
-  model = train_fn(train_ds, model)
-  save_model_path = os.path.join(RESULTS_PATH, 'modelUNET.h5')
-  save_checkpoint(model, save_model_path)
-  predict(model, TEST_IMG)
+  if os.path.exists(MAIN_IMAGE_DIR) == False:
+    os.mkdir(MAIN_IMAGE_DIR)
+  if os.path.exists(MAIN_MASK_DIR) == False:
+    os.mkdir(MAIN_MASK_DIR)
+  add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
+  add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
+  
+  # train_ds = get_loaders(
+  #     TRAIN_IMG_DIRS,
+  #     TRAIN_MASK_DIRS,
+  #     BATCH_SIZE,
+  #     train_transform,
+  #     )
+  # train_ds.__apply__(IMAGES_TO_GENERATE)
+  # train_ds.__read_augmented__()
+  # model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
+  # model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
+  # model = train_fn(train_ds, model)
+  # save_model_path = os.path.join(RESULTS_PATH, 'modelUNET.h5')
+  # save_checkpoint(model, save_model_path)
+  # predict(model, TEST_IMG)
 
 
 if __name__ == "__main__":

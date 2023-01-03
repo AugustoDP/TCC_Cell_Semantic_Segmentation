@@ -1,16 +1,17 @@
-import tensorflow as tf
+#import tensorflow as tf
 from dataset import CellDataset
-from tensorflow import keras
+import os
+#from tensorflow import keras
 
 
 
 def save_checkpoint(state, filepath):
   print("=> Saving checkpoint")
-  state.save(filepath)
+  #state.save(filepath)
 
 def load_checkpoint(checkpoint, model, load_compile):
   print("=> Loading checkpoint")
-  model = keras.model.load_model(checkpoint, compile=load_compile)
+  #model = keras.model.load_model(checkpoint, compile=load_compile)
 
 
 def get_loaders(
@@ -26,7 +27,14 @@ def get_loaders(
     )
   return train_ds
 
-
+def add_class_to_image_name(dataset_names, dir_list, dst_dir):
+  for d_name in dataset_names:
+    for directory in dir_list:
+      if d_name in directory:
+        for filename in os.listdir(directory):
+          src = f"{directory}/{filename}"
+          dst = f"{dst_dir}/{d_name}_{filename}"
+          os.rename(src, dst)
 
 
   
