@@ -123,12 +123,14 @@ def main():
   add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
   threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
-  # train_ds = get_loaders(
-  #     MAIN_IMAGE_DIR,
-  #     MAIN_MASK_DIR,
-  #     BATCH_SIZE,
-  #     train_transform,
-  #     )
+  train_ds = get_loaders(
+      MAIN_IMAGE_DIR,
+      MAIN_MASK_DIR,
+      BATCH_SIZE,
+      train_transform,
+      DATASET_NAMES,
+      sm.get_preprocessing(BACKBONE, ENCODER_WEIGHTS)
+      )
   # train_ds.__apply__(IMAGES_TO_GENERATE)
   # train_ds.__read_augmented__()
   # model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
