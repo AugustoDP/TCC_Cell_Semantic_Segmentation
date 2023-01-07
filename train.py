@@ -9,6 +9,7 @@ import numpy as np
 import albumentations as A
 import torch
 import torch.nn as nn
+import shutil
 
 from torch import optim
 from tqdm import tqdm
@@ -21,6 +22,11 @@ from matplotlib import pyplot as plt
 
 from metrics import dice_loss
 from eval import eval_net
+from augmentation import (
+  get_training_augmentation,
+  get_validation_augmentation,
+  get_preprocessing
+)
 from utils import (
   save_checkpoint,
   load_checkpoint,
@@ -195,50 +201,34 @@ def main():
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   logging.info(f'Using device {device}')
 
-  train_transform = A.Compose([
-      A.VerticalFlip(p=0.5),              
-      A.RandomRotate90(p=1),
-      A.HorizontalFlip(p=0.5),
-      A.Transpose(p=0.5),
-      #A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-      A.ElasticTransform(p=0.5, alpha=10, sigma=3, alpha_affine=3),
-      A.GridDistortion(p=0.5),
-      A.InvertImg(p=0.5),
-      A.RandomBrightnessContrast(p=0.5),
-      A.Sharpen(p=0.5),
-      #A.Normalize(
-      #  mean=[0.0, 0.0, 0.0],
-      #  std=[1.0, 1.0, 1.0],
-      #  max_pixel_value=255.0,
-      #),
-      #A.RandomCrop(height=50, width=50, p=0.5)
-      ]
-  )
+  preprocessing_fn = sm.encoders.get_preprocessing_fn(BACKBONE, ENCODER_WEIGHTS)
+
   if os.path.exists(MAIN_IMAGE_DIR):
-    os.rmdir(MAIN_IMAGE_DIR)
+    shutil.rmtree(MAIN_IMAGE_DIR)
   os.mkdir(MAIN_IMAGE_DIR)
   if os.path.exists(MAIN_MASK_DIR):
-    os.rmdir(MAIN_MASK_DIR)
+    shutil.rmtree(MAIN_MASK_DIR)
   os.mkdir(MAIN_MASK_DIR)
+
   add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
   threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
   train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_SPLIT_SIZE)
   train_ds = get_loaders(
-      train_img_dir,
-      train_mask_dir,
-      BATCH_SIZE,
-      train_transform,
-      DATASET_NAMES,
-      sm.get_preprocessing(BACKBONE, ENCODER_WEIGHTS)
+      train_img_dir=train_img_dir,
+      train_mask_dir=train_mask_dir,
+      batch_size=BATCH_SIZE,
+      train_transform=get_training_augmentation(),
+      train_classes=DATASET_NAMES,
+      train_preprocessing=get_preprocessing(preprocessing_fn)
       )
   val_ds = get_loaders(
-    val_img_dir,
-    val_mask_dir,
-    BATCH_SIZE,
-    train_transform,
-    DATASET_NAMES,
-    sm.get_preprocessing(BACKBONE, ENCODER_WEIGHTS)
+    train_img_dir=val_img_dir,
+    train_mask_dir=val_mask_dir,
+    batch_size=BATCH_SIZE,
+    train_transform=get_validation_augmentation(),
+    train_classes=DATASET_NAMES,
+    train_preprocessing=get_preprocessing(preprocessing_fn)
     )
   # train_ds.__apply__(IMAGES_TO_GENERATE)
   # train_ds.__read_augmented__()

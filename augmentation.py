@@ -1,90 +1,89 @@
-import numpy as np
-from matplotlib import pyplot as plt
-from skimage.transform import AffineTransform, warp
-from skimage import io, img_as_ubyte
-import random
-import os
-import cv2
-import sys
-from os import path
-from scipy.ndimage import rotate
-
-import albumentations as A
-images_to_generate=500
 
 
+import albumentations as albu
+
+def get_training_augmentation():
+    train_transform = [
+        albu.VerticalFlip(p=0.5),              
+        albu.RandomRotate90(p=1),
+        albu.HorizontalFlip(p=0.5),
+        albu.Transpose(p=0.5),
+        #albu.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
+        albu.ElasticTransform(p=0.5, alpha=10, sigma=3, alpha_affine=3),
+        albu.GridDistortion(p=0.5),
+        albu.InvertImg(p=0.5),
+        albu.RandomBrightnessContrast(p=0.5),
+        albu.Sharpen(p=0.5),
+        #albu.Normalize(
+        #  mean=[0.0, 0.0, 0.0],
+        #  std=[1.0, 1.0, 1.0],
+        #  max_pixel_value=255.0,
+        #),
+        #albu.RandomCrop(height=50, width=50, p=0.5)
 
 
-images_path="/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01" #path to original images
-masks_path = "/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG"
+        # albu.HorizontalFlip(p=0.5),
+
+        # albu.ShiftScaleRotate(scale_limit=0.5, rotate_limit=0, shift_limit=0.1, p=1, border_mode=0),
+
+        # albu.PadIfNeeded(min_height=320, min_width=320, always_apply=True, border_mode=0),
+        # albu.RandomCrop(height=320, width=320, always_apply=True),
+
+        # albu.IAAAdditiveGaussianNoise(p=0.2),
+        # albu.IAAPerspective(p=0.5),
+
+        # albu.OneOf(
+        #     [
+        #         albu.CLAHE(p=1),
+        #         albu.RandomBrightness(p=1),
+        #         albu.RandomGamma(p=1),
+        #     ],
+        #     p=0.9,
+        # ),
+
+        # albu.OneOf(
+        #     [
+        #         albu.IAASharpen(p=1),
+        #         albu.Blur(blur_limit=3, p=1),
+        #         albu.MotionBlur(blur_limit=3, p=1),
+        #     ],
+        #     p=0.9,
+        # ),
+
+        # albu.OneOf(
+        #     [
+        #         albu.RandomContrast(p=1),
+        #         albu.HueSaturationValue(p=1),
+        #     ],
+        #     p=0.9,
+        # ),
+    ]
+    return albu.Compose(train_transform)
+
+def get_validation_augmentation():
+    """Add paddings to make image shape divisible by 32"""
+    test_transform = [
+        # albu.PadIfNeeded(384, 480)
+    ]
+    return albu.Compose(test_transform)
+
+def to_tensor(x, **kwargs):
+    return x.transpose(2, 0, 1).astype('float32')
 
 
-img_augmented_path="/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_AUG" # path to store aumented images
-msk_augmented_path="/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST_AUG" # path to store aumented images
-
-def make_lists_to_augment(imgs_path = images_path, msks_path = masks_path):
-  if path.exists(img_augmented_path) == False:
-    os.mkdir(img_augmented_path)
-  if path.exists(msk_augmented_path) == False:
-    os.mkdir(msk_augmented_path)
-  images=[] # to store paths of images from folder
-  masks=[]
-
-  for im in os.listdir(imgs_path):  # read image name from folder and append its path into "images" array     
-      images.append(os.path.join(imgs_path,im))
-
-  for msk in os.listdir(msks_path):  # read image name from folder and append its path into "images" array     
-      masks.append(os.path.join(msks_path,msk))
-
-  images.sort()
-  masks.sort()
-  return images, masks
-
-
-
-def augment(images, masks):
-  aug = A.Compose([
-      A.VerticalFlip(p=0.5),              
-      A.RandomRotate90(p=0.5),
-      A.HorizontalFlip(p=0.5),
-      A.Transpose(p=0.5),
-      #A.ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-      A.GridDistortion(p=0.5),
-      A.InvertImg(p=0.5),
-      A.RandomBrightnessContrast(p=0.5),
-      A.Sharpen(p=0.5),
-      #A.RandomCrop(height=50, width=50, p=0.5)
-      ]
-  )
-
-  for i in range(0, images_to_generate):
-      image = images[i % len(images)]
-      mask = masks[i % len(images)]
-      #print(image, mask)
-      original_image = cv2.imread(image, cv2.IMREAD_UNCHANGED)
-      original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
-      original_mask = cv2.imread(mask, cv2.IMREAD_UNCHANGED)
-      original_mask = cv2.cvtColor(original_mask, cv2.COLOR_BGR2RGB)
-      ret, new_mask = cv2.threshold(original_mask, 1, 1, cv2.THRESH_BINARY)
-      
-      augmented = aug(image=original_image, mask=new_mask)
-      transformed_image = augmented['image']
-      transformed_mask = augmented['mask']
-
-      
-      image_name = os.path.basename(image)
-      mask_name = os.path.basename(mask)
-      new_image_name = "%s_%s.png" %(image_name[:-4], i)
-      new_mask_name = "%s_%s.png" %(mask_name[:-4], i)
-      os.chdir(img_augmented_path)  
-      cv2.imwrite(new_image_name, transformed_image)
-      os.chdir(msk_augmented_path)   
-      cv2.imwrite(new_mask_name, transformed_mask)
-
-
-if __name__ == "__main__":
-  if len(sys.argv) > 2:
-    img_list, msk_list = make_lists_to_augment(sys.argv[1], sys.argv[2])
-  else:
-    img_list, msk_list = make_lists_to_augment()
-  augment(images=img_list, masks=msk_list)
+def get_preprocessing(preprocessing_fn):
+    """Construct preprocessing transform
+    
+    Args:
+        preprocessing_fn (callbale): data normalization function 
+            (can be specific for each pretrained neural network)
+    Return:
+        transform: albumentations.Compose
+    
+    """
+    
+    _transform = [
+        albu.Lambda(image=preprocessing_fn),
+        albu.Lambda(image=to_tensor, mask=to_tensor),
+    ]
+    return albu.Compose(_transform)

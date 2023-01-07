@@ -26,8 +26,8 @@ def get_loaders(
   train_preprocessing
 ):
   train_ds = CellDataset(
-    image_dirs=train_img_dir,
-    mask_dirs=train_mask_dir,
+    images_dir=train_img_dir,
+    masks_dir=train_mask_dir,
     transform=train_transform,
     classes=train_classes,
     preprocessing=train_preprocessing

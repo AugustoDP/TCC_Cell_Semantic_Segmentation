@@ -7,9 +7,10 @@ from torch.utils.data import Dataset
 # stuck, it only works with a certain format of inputs, that's a bad smell
 class CellDataset(Dataset):
   def __init__(self, images_dir, masks_dir, transform=None, classes=None, preprocessing=None):
-    self.ids = os.listdir(images_dir)
-    self.images_fps = [os.path.join(images_dir, image_id) for image_id in self.ids]
-    self.masks_fps = [os.path.join(masks_dir, image_id) for image_id in self.ids]
+    self.image_ids = os.listdir(images_dir)
+    self.mask_ids = os.listdir(masks_dir)
+    self.images_fps = [os.path.join(images_dir, image_id) for image_id in self.image_ids]
+    self.masks_fps = [os.path.join(masks_dir, mask_id) for mask_id in self.mask_ids]
     self.images_dir = images_dir
     self.masks_dir = masks_dir
     self.transform = transform
@@ -27,7 +28,7 @@ class CellDataset(Dataset):
     # convert str names to class values on masks
     self.class_values = [self.classes.index(cls) for cls in classes]
   def __len__(self):
-    return len(self.ids)
+    return len(self.image_ids)
     
   def __getitem__(self, i):
           
