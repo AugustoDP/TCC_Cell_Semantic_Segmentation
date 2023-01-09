@@ -52,7 +52,7 @@ LOSS = sm.losses.DiceLoss
 METRICS = "accuracy"#sm.metrics.iou_score
 BACKBONE = 'timm-efficientnet-b0'
 ENCODER_WEIGHTS = 'imagenet'
-AUGMENTATION_PER_IMAGE = 8
+AUGMENTATION_PER_IMAGE = 4
 TRAIN_SPLIT_SIZE = 0.8
 TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
 RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store model results
@@ -77,8 +77,8 @@ def   train_fn(model,
   val = validation_set
   n_train = len(train)
   n_val = len(val)
-  train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
-  val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)
+  train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+  val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
 
 
   # Sets the effective batch size according to the batch size and the data augmentation ratio
@@ -192,6 +192,20 @@ def   train_fn(model,
 #   output_path = os.path.join(RESULTS_PATH, prediction_image_name)
 #   plt.imsave(output_path, prediction_image, cmap='gray')
 
+# helper function for data visualization
+def visualize(**images):
+    """PLot images in one row."""
+    n = len(images)
+    plt.figure(figsize=(16, 5))
+    for i, (name, image) in enumerate(images.items()):
+        plt.subplot(1, n, i + 1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.title(' '.join(name.split('_')).title())
+        plt.imshow(image)
+    plt.show()
+    
+    
 
 def main():
 
@@ -222,32 +236,45 @@ def main():
       train_classes=DATASET_NAMES,
       train_preprocessing=get_preprocessing(preprocessing_fn)
       )
-  val_ds = get_loaders(
-    train_img_dir=val_img_dir,
-    train_mask_dir=val_mask_dir,
-    batch_size=BATCH_SIZE,
-    train_transform=get_validation_augmentation(),
-    train_classes=DATASET_NAMES,
-    train_preprocessing=get_preprocessing(preprocessing_fn)
-    )
+  # val_ds = get_loaders(
+  #   train_img_dir=val_img_dir,
+  #   train_mask_dir=val_mask_dir,
+  #   batch_size=BATCH_SIZE,
+  #   train_transform=get_validation_augmentation(),
+  #   train_classes=DATASET_NAMES,
+  #   train_preprocessing=get_preprocessing(preprocessing_fn)
+  #   )
+
   # train_ds.__apply__(IMAGES_TO_GENERATE)
   # train_ds.__read_augmented__()
-  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
-  # Distribute training over GPUs
-  model = nn.DataParallel(model)
-  train_fn(model=model, 
-            device=device,
-            training_set=train_ds,
-            validation_set=val_ds,
-            dir_checkpoint=RESULTS_PATH,
-            epochs=EPOCHS,
-            batch_size=BATCH_SIZE,
-            lr=LR,
-            save_cp=True,
-            img_scale=1,
-            n_classes=NUM_CLASSES,
-            n_channels=3,
-            augmentation_ratio = AUGMENTATION_PER_IMAGE)
+
+  image, mask = train_ds[4] # get some sample
+  print(np.unique(image))
+  os.chdir("/content/TCC_Cell_Semantic_Segmentation/")
+  cv2.imwrite('test.png', image)
+  test = cv2.imread('test.png', cv2.IMREAD_UNCHANGED)
+  print(np.unique(test))
+
+  # model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
+  # # Distribute training over GPUs
+  # model = nn.DataParallel(model)
+
+
+
+  # train_fn(model=model, 
+  #           device=device,
+  #           training_set=train_ds,
+  #           validation_set=val_ds,
+  #           dir_checkpoint=RESULTS_PATH,
+  #           epochs=EPOCHS,
+  #           batch_size=BATCH_SIZE,
+  #           lr=LR,
+  #           save_cp=True,
+  #           img_scale=1,
+  #           n_classes=NUM_CLASSES,
+  #           n_channels=3,
+  #           augmentation_ratio = AUGMENTATION_PER_IMAGE)
+
   # model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
   # model = train_fn(train_ds, model)
   # save_model_path = os.path.join(RESULTS_PATH, 'modelUNET.h5')

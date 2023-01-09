@@ -2,6 +2,7 @@ import numpy as np
 import os
 import cv2
 from torch.utils.data import Dataset
+from PIL import Image
 
 # TODO: Think about making this more generic and flexible, for now architecture is very
 # stuck, it only works with a certain format of inputs, that's a bad smell
@@ -25,6 +26,8 @@ class CellDataset(Dataset):
     if os.path.exists(self.aug_masks_dir) == False:
       os.mkdir(self.aug_masks_dir)
 
+    self.images_fps.sort()
+    self.masks_fps.sort()
     # convert str names to class values on masks
     self.class_values = [self.classes.index(cls) for cls in classes]
   def __len__(self):
@@ -33,24 +36,25 @@ class CellDataset(Dataset):
   def __getitem__(self, i):
           
           # read data
-          image = cv2.imread(self.images_fps[i], cv2.IMREAD_UNCHANGED)
-          image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-          mask = cv2.imread(self.masks_fps[i], cv2.IMREAD_UNCHANGED)
-          mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
-          # extract certain classes from mask (e.g. cars)
-          masks = [(mask == v) for v in self.class_values]
-          mask = np.stack(masks, axis=-1).astype('float')
-          
+          # image = cv2.imread(self.images_fps[i], cv2.IMREAD_UNCHANGED)
+          # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+          # mask = cv2.imread(self.masks_fps[i], cv2.IMREAD_UNCHANGED)
+          # mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
+          image = Image.open(self.images_fps[i])
+          rgbimg = Image.new("RGBA", image.size)
+          rgbimg.paste(image)
+          mask = Image.open(self.masks_fps[i])
+          # # extract certain classes from mask (e.g. cars)
+          # masks = [(mask == v) for v in self.class_values]
+          # mask = np.stack(masks, axis=-1).astype('float')
           # apply augmentations
           if self.transform:
               sample = self.transform(image=image, mask=mask)
-              image, mask = sample['image'], sample['mask']
-          
+              image, mask = sample['image'], sample['mask']            
           # apply preprocessing
           if self.preprocessing:
               sample = self.preprocessing(image=image, mask=mask)
-              image, mask = sample['image'], sample['mask']
-              
+              image, mask = sample['image'], sample['mask']  
           return image, mask
 # Before reaching augmentations we should first threshold masks properly into different classes
 # According to each cell type, it can be in a simple ascending order

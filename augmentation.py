@@ -14,11 +14,11 @@ def get_training_augmentation():
         albu.InvertImg(p=0.5),
         albu.RandomBrightnessContrast(p=0.5),
         albu.Sharpen(p=0.5),
-        #albu.Normalize(
-        #  mean=[0.0, 0.0, 0.0],
-        #  std=[1.0, 1.0, 1.0],
-        #  max_pixel_value=255.0,
-        #),
+        # albu.Normalize(
+        #   mean=[0.0, 0.0, 0.0],
+        #   std=[1.0, 1.0, 1.0],
+        #   max_pixel_value=255.0,
+        # ),
         #albu.RandomCrop(height=50, width=50, p=0.5)
 
 
@@ -84,6 +84,6 @@ def get_preprocessing(preprocessing_fn):
     
     _transform = [
         albu.Lambda(image=preprocessing_fn),
-        albu.Lambda(image=to_tensor, mask=to_tensor),
+        #albu.Lambda(image=to_tensor, mask=to_tensor),
     ]
     return albu.Compose(_transform)

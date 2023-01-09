@@ -57,6 +57,8 @@ def threshold_masks(dataset_names, mask_dir):
 def split_train_val_set(img_dir, mask_dir, split):
   img_list = os.listdir(img_dir)
   mask_list = os.listdir(mask_dir)
+  img_list.sort()
+  mask_list.sort()
   img_list, mask_list = randomize_pair_file_lists(img_list, mask_list)
   training_img, validation_img, training_mask, validation_mask = get_training_and_validation_sets(split, img_list, mask_list)
   train_img_dir, val_img_dir = make_train_val_dirs(img_dir, training_img, validation_img)
