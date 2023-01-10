@@ -21,6 +21,7 @@ def get_loaders(
   train_img_dir,
   train_mask_dir,
   batch_size,
+  max_size,
   train_transform,
   train_classes,
   train_preprocessing
@@ -28,6 +29,7 @@ def get_loaders(
   train_ds = CellDataset(
     images_dir=train_img_dir,
     masks_dir=train_mask_dir,
+    size=max_size,
     transform=train_transform,
     classes=train_classes,
     preprocessing=train_preprocessing
@@ -49,7 +51,6 @@ def threshold_masks(dataset_names, mask_dir):
     for mask_fp in os.listdir(mask_dir):
       if d_name in mask_fp:
         mask = cv2.imread(mask_fp, cv2.IMREAD_UNCHANGED)
-        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
         ret, mask = cv2.threshold(mask, 1, dataset_names.index(d_name)+1, cv2.THRESH_BINARY)
         cv2.imwrite(mask_fp, mask)
 

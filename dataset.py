@@ -1,13 +1,21 @@
 import numpy as np
 import os
 import cv2
+import torch
 from torch.utils.data import Dataset
 from PIL import Image
 
 # TODO: Think about making this more generic and flexible, for now architecture is very
 # stuck, it only works with a certain format of inputs, that's a bad smell
 class CellDataset(Dataset):
-  def __init__(self, images_dir, masks_dir, transform=None, classes=None, preprocessing=None):
+  def __init__(self,
+   images_dir,
+   masks_dir,
+   size,
+   transform=None, 
+   classes=None, 
+   preprocessing=None
+   ):
     self.image_ids = os.listdir(images_dir)
     self.mask_ids = os.listdir(masks_dir)
     self.images_fps = [os.path.join(images_dir, image_id) for image_id in self.image_ids]
@@ -25,6 +33,8 @@ class CellDataset(Dataset):
       os.mkdir(self.aug_images_dir)
     if os.path.exists(self.aug_masks_dir) == False:
       os.mkdir(self.aug_masks_dir)
+    self.max_size = size
+
 
     self.images_fps.sort()
     self.masks_fps.sort()
@@ -36,17 +46,15 @@ class CellDataset(Dataset):
   def __getitem__(self, i):
           
           # read data
-          # image = cv2.imread(self.images_fps[i], cv2.IMREAD_UNCHANGED)
-          # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-          # mask = cv2.imread(self.masks_fps[i], cv2.IMREAD_UNCHANGED)
-          # mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
-          image = Image.open(self.images_fps[i])
-          rgbimg = Image.new("RGBA", image.size)
-          rgbimg.paste(image)
-          mask = Image.open(self.masks_fps[i])
+          image = cv2.imread(self.images_fps[i])
+          image = cv2.resize(image, (self.max_size, self.max_size))
+          image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+          mask = cv2.imread(self.masks_fps[i], cv2.IMREAD_UNCHANGED)
+          mask = cv2.resize(mask, (self.max_size, self.max_size))
           # # extract certain classes from mask (e.g. cars)
-          # masks = [(mask == v) for v in self.class_values]
-          # mask = np.stack(masks, axis=-1).astype('float')
+          masks = [(mask == v) for v in self.class_values]
+          mask = np.stack(masks, axis=-1).astype('float')
+
           # apply augmentations
           if self.transform:
               sample = self.transform(image=image, mask=mask)
@@ -55,7 +63,11 @@ class CellDataset(Dataset):
           if self.preprocessing:
               sample = self.preprocessing(image=image, mask=mask)
               image, mask = sample['image'], sample['mask']  
-          return image, mask
+
+          return {
+            'image': [torch.from_numpy(image).type(torch.FloatTensor)],
+            'mask': [torch.from_numpy(mask).type(torch.FloatTensor)]
+        }
 # Before reaching augmentations we should first threshold masks properly into different classes
 # According to each cell type, it can be in a simple ascending order
 # (i.e cell A has mask with 1's and 0's, cell B has mask with 2's and 0's...)

@@ -84,6 +84,6 @@ def get_preprocessing(preprocessing_fn):
     
     _transform = [
         albu.Lambda(image=preprocessing_fn),
-        #albu.Lambda(image=to_tensor, mask=to_tensor),
+        albu.Lambda(image=to_tensor, mask=to_tensor),
     ]
     return albu.Compose(_transform)

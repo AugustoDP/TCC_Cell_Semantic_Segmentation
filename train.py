@@ -41,12 +41,11 @@ MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 DATASET_NAMES = ['Fluo-C2DL-MSC', 'Fluo-N2DH-GOWT1']
 TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01']
 TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG']
-BATCH_SIZE = 32
+BATCH_SIZE = 1
 EPOCHS = 25
 LR = 0.001
 LOAD_MODEL = False
-IMAGE_WIDTH = 256
-IMAGE_HEIGHT = 256
+IMAGE_SIZE = 256
 OPTIMIZER = 'Adam'
 LOSS = sm.losses.DiceLoss
 METRICS = "accuracy"#sm.metrics.iou_score
@@ -77,8 +76,8 @@ def   train_fn(model,
   val = validation_set
   n_train = len(train)
   n_val = len(val)
-  train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
-  val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=2, pin_memory=True)
+  train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+  val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
 
 
   # Sets the effective batch size according to the batch size and the data augmentation ratio
@@ -124,12 +123,10 @@ def   train_fn(model,
               imgs = imgs.to(device=device, dtype=torch.float32)
               mask_type = torch.float32 if n_classes == 1 else torch.long
               true_masks = true_masks.to(device=device, dtype=mask_type)
-
-              masks_pred = model(imgs)                         
-              
+              masks_pred = model(imgs)                  
               # Compute loss
-              loss = focal_loss(masks_pred, true_masks.squeeze(1), alpha=0.25, gamma = 2, reduction='mean').unsqueeze(0)
-              loss += dice_loss(masks_pred, true_masks.squeeze(1), True, k = 0.75)
+              loss = focal_loss(masks_pred, true_masks.squeeze(0), alpha=0.25, gamma = 2, reduction='mean').unsqueeze(0)
+              loss += dice_loss(masks_pred, true_masks.squeeze(0), True, k = 0.75)
 
               epoch_loss += loss.item()
               writer.add_scalar('Loss/train', loss.item(), global_step)
@@ -232,48 +229,47 @@ def main():
       train_img_dir=train_img_dir,
       train_mask_dir=train_mask_dir,
       batch_size=BATCH_SIZE,
+      max_size=IMAGE_SIZE,
       train_transform=get_training_augmentation(),
       train_classes=DATASET_NAMES,
       train_preprocessing=get_preprocessing(preprocessing_fn)
       )
-  # val_ds = get_loaders(
-  #   train_img_dir=val_img_dir,
-  #   train_mask_dir=val_mask_dir,
-  #   batch_size=BATCH_SIZE,
-  #   train_transform=get_validation_augmentation(),
-  #   train_classes=DATASET_NAMES,
-  #   train_preprocessing=get_preprocessing(preprocessing_fn)
-  #   )
+  val_ds = get_loaders(
+    train_img_dir=val_img_dir,
+    train_mask_dir=val_mask_dir,
+    batch_size=BATCH_SIZE,
+    max_size=IMAGE_SIZE,
+    train_transform=get_validation_augmentation(),
+    train_classes=DATASET_NAMES,
+    train_preprocessing=get_preprocessing(preprocessing_fn)
+    )
+  sample = train_ds[4]
+  #print(sample['image'].shape, sample['mask'].shape)
+  #visualize(image=image, mask=mask)
+
 
   # train_ds.__apply__(IMAGES_TO_GENERATE)
   # train_ds.__read_augmented__()
 
-  image, mask = train_ds[4] # get some sample
-  print(np.unique(image))
-  os.chdir("/content/TCC_Cell_Semantic_Segmentation/")
-  cv2.imwrite('test.png', image)
-  test = cv2.imread('test.png', cv2.IMREAD_UNCHANGED)
-  print(np.unique(test))
-
-  # model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
-  # # Distribute training over GPUs
-  # model = nn.DataParallel(model)
+  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
+  # Distribute training over GPUs
+  model = nn.DataParallel(model)
 
 
 
-  # train_fn(model=model, 
-  #           device=device,
-  #           training_set=train_ds,
-  #           validation_set=val_ds,
-  #           dir_checkpoint=RESULTS_PATH,
-  #           epochs=EPOCHS,
-  #           batch_size=BATCH_SIZE,
-  #           lr=LR,
-  #           save_cp=True,
-  #           img_scale=1,
-  #           n_classes=NUM_CLASSES,
-  #           n_channels=3,
-  #           augmentation_ratio = AUGMENTATION_PER_IMAGE)
+  train_fn(model=model, 
+            device=device,
+            training_set=train_ds,
+            validation_set=val_ds,
+            dir_checkpoint=RESULTS_PATH,
+            epochs=EPOCHS,
+            batch_size=BATCH_SIZE,
+            lr=LR,
+            save_cp=True,
+            img_scale=1,
+            n_classes=NUM_CLASSES,
+            n_channels=3,
+            augmentation_ratio = AUGMENTATION_PER_IMAGE)
 
   # model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
   # model = train_fn(train_ds, model)
