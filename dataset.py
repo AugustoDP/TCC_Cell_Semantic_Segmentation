@@ -64,10 +64,11 @@ class CellDataset(Dataset):
               sample = self.preprocessing(image=image, mask=mask)
               image, mask = sample['image'], sample['mask']  
 
-          return {
-            'image': [torch.from_numpy(image).type(torch.FloatTensor)],
-            'mask': [torch.from_numpy(mask).type(torch.FloatTensor)]
-        }
+        #   return {
+        #     'image': [torch.from_numpy(image).type(torch.FloatTensor)],
+        #     'mask': [torch.from_numpy(mask).type(torch.FloatTensor)]
+        # }
+          return image, mask
 # Before reaching augmentations we should first threshold masks properly into different classes
 # According to each cell type, it can be in a simple ascending order
 # (i.e cell A has mask with 1's and 0's, cell B has mask with 2's and 0's...)

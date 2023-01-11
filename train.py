@@ -56,9 +56,9 @@ TRAIN_SPLIT_SIZE = 0.8
 TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
 RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store model results
 NUM_CLASSES = 2
-ACTIVATION = "softmax"
+ACTIVATION = "softmax2d"
 
-def   train_fn(model, 
+def train_fn(model, 
             device,
             training_set,
             validation_set,
@@ -173,6 +173,64 @@ def   train_fn(model,
           logging.info(f'Checkpoint {epoch + 1} saved !')
   writer.close()
 
+def train_model(model, 
+            device,
+            training_set,
+            validation_set,
+            epochs=50,
+            n_classes=2,
+  
+):
+
+  train_loader = DataLoader(training_set, batch_size=8, shuffle=True, num_workers=0)
+  valid_loader = DataLoader(validation_set, batch_size=1, shuffle=False, num_workers=0)
+  # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
+  # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
+  loss = sm.utils.losses.DiceLoss()
+  metrics = [
+      sm.utils.metrics.IoU(threshold=0.5),
+  ]
+
+  optimizer = torch.optim.Adam([ 
+      dict(params=model.parameters(), lr=0.0001),
+  ])
+  # create epoch runners 
+  # it is a simple loop of iterating over dataloader`s samples
+  train_epoch = sm.utils.train.TrainEpoch(
+      model, 
+      loss=loss, 
+      metrics=metrics, 
+      optimizer=optimizer,
+      device=device,
+      verbose=True,
+  )
+
+  valid_epoch = sm.utils.train.ValidEpoch(
+      model, 
+      loss=loss, 
+      metrics=metrics, 
+      device=device,
+      verbose=True,
+  )
+  # train model for 40 epochs
+
+  max_score = 0
+
+  for i in range(0, epochs):
+      
+      print('\nEpoch: {}'.format(i))
+      train_logs = train_epoch.run(train_loader)
+      valid_logs = valid_epoch.run(valid_loader)
+      
+      # do something (save model, change lr, etc.)
+      if max_score < valid_logs['iou_score']:
+          max_score = valid_logs['iou_score']
+          torch.save(model, './best_model.pth')
+          print('Model saved!')
+          
+      if i == 25:
+          optimizer.param_groups[0]['lr'] = 1e-5
+          print('Decrease decoder learning rate to 1e-5!')
 
 # def predict(model, image_path):
 #   image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)       
@@ -257,19 +315,27 @@ def main():
 
 
 
-  train_fn(model=model, 
+  # train_fn(model=model, 
+  #           device=device,
+  #           training_set=train_ds,
+  #           validation_set=val_ds,
+  #           dir_checkpoint=RESULTS_PATH,
+  #           epochs=EPOCHS,
+  #           batch_size=BATCH_SIZE,
+  #           lr=LR,
+  #           save_cp=True,
+  #           img_scale=1,
+  #           n_classes=NUM_CLASSES,
+  #           n_channels=3,
+  #           augmentation_ratio = AUGMENTATION_PER_IMAGE)
+
+  train_model(model=model, 
             device=device,
             training_set=train_ds,
             validation_set=val_ds,
-            dir_checkpoint=RESULTS_PATH,
             epochs=EPOCHS,
-            batch_size=BATCH_SIZE,
-            lr=LR,
-            save_cp=True,
-            img_scale=1,
-            n_classes=NUM_CLASSES,
-            n_channels=3,
-            augmentation_ratio = AUGMENTATION_PER_IMAGE)
+            n_classes=NUM_CLASSES
+            )
 
   # model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
   # model = train_fn(train_ds, model)
