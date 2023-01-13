@@ -97,3 +97,41 @@ def get_training_and_validation_sets(split=0.7, img_list=[], mask_list=[]):
     training_mask = mask_list[:split_index]
     validation_mask = mask_list[split_index:]
     return training_img, validation_img, training_mask, validation_mask
+
+
+def generate_augmented_images(
+  image_dir, 
+  mask_dir, 
+  augmentation_ratio,
+  transform
+  ):
+  img_list = os.listdir(image_dir)
+  mask_list = os.listdir(mask_dir)
+  img_list.sort()
+  mask_list.sort()
+  for index in range(len(img_list)):
+    for i in range(augmentation_ratio):
+
+      image = cv2.imread(f"{image_dir}/{img_list[index]}")
+      image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+      mask = cv2.imread(f"{mask_dir}/{mask_list[index]}", cv2.IMREAD_UNCHANGED)
+      if transform is not None:
+        augmented = transform(image=image, mask=mask)
+        image = augmented["image"]
+        mask = augmented["mask"]
+
+      image_name = os.path.basename(img_list[index])
+      mask_name = os.path.basename(mask_list[index])
+      new_image_name = "%s_%s.png" %(image_name[:-4], i)
+      new_mask_name = "%s_%s.png" %(mask_name[:-4], i)
+      os.chdir(image_dir)  
+      cv2.imwrite(new_image_name, image)
+      os.chdir(mask_dir)   
+      cv2.imwrite(new_mask_name, mask)
+
+  
+
+
+
+
+

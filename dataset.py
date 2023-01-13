@@ -25,14 +25,14 @@ class CellDataset(Dataset):
     self.transform = transform
     self.preprocessing = preprocessing
     self.classes = classes
-    self.aug_images_dir = images_dir + "_AUG" 
-    self.aug_masks_dir = masks_dir + "_AUG"
-    self.aug_images = []
-    self.aug_masks = []
-    if os.path.exists(self.aug_images_dir) == False:
-      os.mkdir(self.aug_images_dir)
-    if os.path.exists(self.aug_masks_dir) == False:
-      os.mkdir(self.aug_masks_dir)
+    # self.aug_images_dir = images_dir + "_AUG" 
+    # self.aug_masks_dir = masks_dir + "_AUG"
+    # self.aug_images = []
+    # self.aug_masks = []
+    # if os.path.exists(self.aug_images_dir) == False:
+    #   os.mkdir(self.aug_images_dir)
+    # if os.path.exists(self.aug_masks_dir) == False:
+    #   os.mkdir(self.aug_masks_dir)
     self.max_size = size
 
 
@@ -56,9 +56,9 @@ class CellDataset(Dataset):
           mask = np.stack(masks, axis=-1).astype('float')
 
           # apply augmentations
-          if self.transform:
-              sample = self.transform(image=image, mask=mask)
-              image, mask = sample['image'], sample['mask']            
+          # if self.transform:
+          #     sample = self.transform(image=image, mask=mask)
+          #     image, mask = sample['image'], sample['mask']            
           # apply preprocessing
           if self.preprocessing:
               sample = self.preprocessing(image=image, mask=mask)
@@ -72,52 +72,52 @@ class CellDataset(Dataset):
 # Before reaching augmentations we should first threshold masks properly into different classes
 # According to each cell type, it can be in a simple ascending order
 # (i.e cell A has mask with 1's and 0's, cell B has mask with 2's and 0's...)
-  def __apply__(self, images_to_generate):
-      for index in range(0, images_to_generate):
-        image = cv2.imread(self.images_fps[index % self.__len__()], cv2.IMREAD_UNCHANGED)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        mask = cv2.imread(self.masks_fps[index % self.__len__()], cv2.IMREAD_UNCHANGED)
-        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
+  # def __apply__(self, images_to_generate):
+  #     for index in range(images_to_generate):
+  #       image = cv2.imread(self.images_fps[index % self.__len__()], cv2.IMREAD_UNCHANGED)
+  #       image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+  #       mask = cv2.imread(self.masks_fps[index % self.__len__()], cv2.IMREAD_UNCHANGED)
+  #       mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
 
-        if self.transform is not None:
-          augmented = self.transform(image=image, mask=mask)
-          image = augmented["image"]
-          mask = augmented["mask"]
+  #       if self.transform is not None:
+  #         augmented = self.transform(image=image, mask=mask)
+  #         image = augmented["image"]
+  #         mask = augmented["mask"]
 
-        image_name = os.path.basename(self.images_fps[index % self.__len__()])
-        mask_name = os.path.basename(self.masks_fps[index % self.__len__()])
-        new_image_name = "%s_%s.png" %(image_name[:-4], index)
-        new_mask_name = "%s_%s.png" %(mask_name[:-4], index)
-        os.chdir(self.aug_images_dir)  
-        cv2.imwrite(new_image_name, image)
-        os.chdir(self.aug_masks_dir)   
-        cv2.imwrite(new_mask_name, mask)
+  #       image_name = os.path.basename(self.images_fps[index % self.__len__()])
+  #       mask_name = os.path.basename(self.masks_fps[index % self.__len__()])
+  #       new_image_name = "%s_%s.png" %(image_name[:-4], index)
+  #       new_mask_name = "%s_%s.png" %(mask_name[:-4], index)
+  #       os.chdir(self.aug_images_dir)  
+  #       cv2.imwrite(new_image_name, image)
+  #       os.chdir(self.aug_masks_dir)   
+  #       cv2.imwrite(new_mask_name, mask)
   
-  def __read_augmented__(self):
-    self.aug_images = {aug_img_dir: os.listdir(aug_img_dir) for aug_img_dir in self.aug_image_dirs}
-    self.aug_masks = {aug_mask_dir: os.listdir(aug_mask_dir) for aug_mask_dir in self.aug_mask_dirs}
-    for aug_img_dir in self.aug_images:
-      self.aug_images[aug_img_dir].sort()
-    for aug_mask_dir in self.aug_masks:
-      self.aug_masks[aug_mask_dir].sort()  
+  # def __read_augmented__(self):
+  #   self.aug_images = {aug_img_dir: os.listdir(aug_img_dir) for aug_img_dir in self.aug_image_dirs}
+  #   self.aug_masks = {aug_mask_dir: os.listdir(aug_mask_dir) for aug_mask_dir in self.aug_mask_dirs}
+  #   for aug_img_dir in self.aug_images:
+  #     self.aug_images[aug_img_dir].sort()
+  #   for aug_mask_dir in self.aug_masks:
+  #     self.aug_masks[aug_mask_dir].sort()  
 
-  def __get_img_mask_list__(self, height=256, width=256):
-    imgs_list = []
-    masks_list = []
-    for aug_img_dir, aug_mask_dir in zip(self.aug_image_dirs, self.aug_mask_dirs):
-      for index in range(0, len(self.aug_images[aug_img_dir])):
-        img_path = os.path.join(aug_img_dir, self.aug_images[aug_img_dir][index])
-        mask_path = os.path.join(aug_mask_dir, self.aug_masks[aug_mask_dir][index])
-        image = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
-        image = cv2.resize(image, (height, width))
-        mask = cv2.imread(mask_path, cv2.IMREAD_UNCHANGED)
-        mask = cv2.resize(mask, (height, width))
-        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        imgs_list.append(image)
-        masks_list.append(mask)
-    imgs_list = np.array(imgs_list)
-    masks_list = np.array(masks_list)
-    print(len(imgs_list), len(masks_list))
-    return imgs_list, masks_list
+  # def __get_img_mask_list__(self, height=256, width=256):
+  #   imgs_list = []
+  #   masks_list = []
+  #   for aug_img_dir, aug_mask_dir in zip(self.aug_image_dirs, self.aug_mask_dirs):
+  #     for index in range(0, len(self.aug_images[aug_img_dir])):
+  #       img_path = os.path.join(aug_img_dir, self.aug_images[aug_img_dir][index])
+  #       mask_path = os.path.join(aug_mask_dir, self.aug_masks[aug_mask_dir][index])
+  #       image = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+  #       image = cv2.resize(image, (height, width))
+  #       mask = cv2.imread(mask_path, cv2.IMREAD_UNCHANGED)
+  #       mask = cv2.resize(mask, (height, width))
+  #       mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+  #       imgs_list.append(image)
+  #       masks_list.append(mask)
+  #   imgs_list = np.array(imgs_list)
+  #   masks_list = np.array(masks_list)
+  #   print(len(imgs_list), len(masks_list))
+  #   return imgs_list, masks_list
 
 

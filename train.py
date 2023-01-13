@@ -1,4 +1,4 @@
-#import tensorflow as tf
+  #import tensorflow as tf
 import logging
 import segmentation_models_pytorch as sm
 import glob
@@ -25,7 +25,7 @@ from eval import eval_net
 from augmentation import (
   get_training_augmentation,
   get_validation_augmentation,
-  get_preprocessing
+  get_preprocessing,
 )
 from utils import (
   save_checkpoint,
@@ -33,7 +33,8 @@ from utils import (
   get_loaders,
   add_class_to_image_name,
   threshold_masks,
-  split_train_val_set
+  split_train_val_set,
+  generate_augmented_images
 )
 
 MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
@@ -52,7 +53,7 @@ METRICS = "accuracy"#sm.metrics.iou_score
 BACKBONE = 'timm-efficientnet-b0'
 ENCODER_WEIGHTS = 'imagenet'
 AUGMENTATION_PER_IMAGE = 4
-TRAIN_SPLIT_SIZE = 0.8
+TRAIN_VAL_SPLIT = 0.8
 TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
 RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store model results
 NUM_CLASSES = 2
@@ -282,7 +283,9 @@ def main():
   add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
   threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
-  train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_SPLIT_SIZE)
+  train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
+  generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
+
   train_ds = get_loaders(
       train_img_dir=train_img_dir,
       train_mask_dir=train_mask_dir,
@@ -304,7 +307,7 @@ def main():
   sample = train_ds[4]
   #print(sample['image'].shape, sample['mask'].shape)
   #visualize(image=image, mask=mask)
-
+  
 
   # train_ds.__apply__(IMAGES_TO_GENERATE)
   # train_ds.__read_augmented__()
