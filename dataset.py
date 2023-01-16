@@ -35,7 +35,6 @@ class CellDataset(Dataset):
     #   os.mkdir(self.aug_masks_dir)
     self.max_size = size
 
-
     self.images_fps.sort()
     self.masks_fps.sort()
     # convert str names to class values on masks

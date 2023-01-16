@@ -39,11 +39,11 @@ from utils import (
 
 MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
-DATASET_NAMES = ['Fluo-C2DL-MSC', 'Fluo-N2DH-GOWT1']
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG']
+DATASET_NAMES = ['Fluo-C2DL-MSC', 'Fluo-N2DH-GOWT1', 'DIC-C2DH-HeLa']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
 BATCH_SIZE = 1
-EPOCHS = 25
+EPOCHS = 35
 LR = 0.001
 LOAD_MODEL = False
 IMAGE_SIZE = 256
@@ -52,11 +52,11 @@ LOSS = sm.losses.DiceLoss
 METRICS = "accuracy"#sm.metrics.iou_score
 BACKBONE = 'timm-efficientnet-b0'
 ENCODER_WEIGHTS = 'imagenet'
-AUGMENTATION_PER_IMAGE = 4
+AUGMENTATION_PER_IMAGE = 5
 TRAIN_VAL_SPLIT = 0.8
 TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
 RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store model results
-NUM_CLASSES = 2
+NUM_CLASSES = 3
 ACTIVATION = "softmax2d"
 
 def train_fn(model, 
@@ -224,12 +224,18 @@ def train_model(model,
       valid_logs = valid_epoch.run(valid_loader)
       
       # do something (save model, change lr, etc.)
+         
       if max_score < valid_logs['iou_score']:
-          max_score = valid_logs['iou_score']
-          torch.save(model, './best_model.pth')
-          print('Model saved!')
-          
-      if i == 25:
+          max_score = valid_logs['iou_score']          
+          try:
+            os.mkdir(RESULTS_PATH)
+            logging.info('Created checkpoint directory')
+          except OSError:
+              pass
+          torch.save(model,
+                      RESULTS_PATH + f'CP_epoch{i + 1}.pth')
+          logging.info(f'Checkpoint {i + 1} saved !')
+      if i == 20:
           optimizer.param_groups[0]['lr'] = 1e-5
           print('Decrease decoder learning rate to 1e-5!')
 
@@ -284,8 +290,8 @@ def main():
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
   threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
   train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
+  img_list = os.listdir(train_img_dir)
   generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
-
   train_ds = get_loaders(
       train_img_dir=train_img_dir,
       train_mask_dir=train_mask_dir,
@@ -304,7 +310,7 @@ def main():
     train_classes=DATASET_NAMES,
     train_preprocessing=get_preprocessing(preprocessing_fn)
     )
-  sample = train_ds[4]
+  print("dataset", len(train_ds))
   #print(sample['image'].shape, sample['mask'].shape)
   #visualize(image=image, mask=mask)
   
