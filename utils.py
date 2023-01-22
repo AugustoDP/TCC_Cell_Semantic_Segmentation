@@ -4,6 +4,7 @@ import shutil
 import numpy as np
 import os
 import cv2
+from scipy import ndimage
 #from tensorflow import keras
 from random import shuffle
 from math import floor
@@ -105,6 +106,17 @@ def generate_augmented_images(
   augmentation_ratio,
   transform
   ):
+  """ Generate a number of augmented images using specified transform.
+  :param image_dir: images directory.
+    :type str:
+  :param mask_dir: masks directory.
+    :type str:
+  :param augmentation_ratio: number of augmentations to generate per image.
+    :type int:
+  :param transform: albumentation transform containing augmentations to perform
+    :type:
+  :return: None.
+  """
   img_list = os.listdir(image_dir)
   mask_list = os.listdir(mask_dir)
   img_list.sort()
@@ -129,9 +141,67 @@ def generate_augmented_images(
       os.chdir(mask_dir)   
       cv2.imwrite(new_mask_name, mask)
 
-  
+
+def get_cell_ids(mask):
+    """ Get cell ids in mask image.
+
+    :param mask: mask image containing cell instances.
+        :type image:
+    :return: List of cell ids.
+    """
+
+    cell_ids = np.unique(mask)
+    cell_ids = cell_ids[cell_ids > 0]
+
+    return cell_ids  
+
+def binary_label(label):
+    """ Binary label image creation.
+
+    :param label: Intensity-coded instance segmentation label image.
+        :type label:
+    :return: Binary label image.
+    """
+    return label > 0
 
 
+def boundary_label_2d(label, algorithm='dilation'):
+    """ Boundary label image creation.
+
+    :param label: Intensity-coded instance segmentation label image.
+        :type label:
+    :param algorithm: canny or dilation-based boundary creation.
+        :type algorithm: str
+    :return: Boundary label image.
+    """
+
+    label_bin = binary_label(label)
+
+    if algorithm == 'canny':
+
+        if len(get_cell_ids(label)) > 255:
+            raise Exception('Canny method works only with uint8 images but more than 255 nuclei detected.')
+
+        boundary = cv2.Canny(label.astype(np.uint8), 1, 1) > 0
+        label_boundary = np.maximum(label_bin, 2 * boundary)
+
+    elif algorithm == 'dilation':
+
+        kernel = np.ones(shape=(3, 3), dtype=np.uint8)
+
+        # Pre-allocation
+        boundary = np.zeros(shape=label.shape, dtype=np.bool)
+
+        nucleus_ids = get_cell_ids(label)
+
+        for nucleus_id in nucleus_ids:
+            nucleus = (label == nucleus_id)
+            nucleus_boundary = ndimage.binary_dilation(nucleus, kernel) ^ nucleus
+            boundary += nucleus_boundary
+
+        label_boundary = np.maximum(label_bin, 2 * boundary)
+
+    return label_boundary
 
 
 

@@ -58,14 +58,14 @@ def get_training_augmentation():
         #     p=0.9,
         # ),
     ]
-    return albu.Compose(train_transform)
+    return albu.Compose(train_transform, additional_targets={'boundary':'mask'})
 
 def get_validation_augmentation():
     """Add paddings to make image shape divisible by 32"""
     test_transform = [
         # albu.PadIfNeeded(384, 480)
     ]
-    return albu.Compose(test_transform)
+    return albu.Compose(test_transform, additional_targets={'boundary':'mask'})
 
 def to_tensor(x, **kwargs):
     return x.transpose(2, 0, 1).astype('float32')
@@ -75,7 +75,7 @@ def get_preprocessing(preprocessing_fn):
     """Construct preprocessing transform
     
     Args:
-        preprocessing_fn (callbale): data normalization function 
+        preprocessing_fn (callable): data normalization function 
             (can be specific for each pretrained neural network)
     Return:
         transform: albumentations.Compose
