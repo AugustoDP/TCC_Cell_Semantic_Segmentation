@@ -4,7 +4,7 @@ import cv2
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
-from utils import boundary_label_2d, binary_label
+
 
 # TODO: Think about making this more generic and flexible, for now architecture is very
 # stuck, it only works with a certain format of inputs, that's a bad smell
@@ -12,6 +12,7 @@ class CellDataset(Dataset):
   def __init__(self,
    images_dir,
    masks_dir,
+   boundaries_dir,
    size,
    transform=None, 
    classes=None, 
@@ -19,10 +20,13 @@ class CellDataset(Dataset):
    ):
     self.image_ids = os.listdir(images_dir)
     self.mask_ids = os.listdir(masks_dir)
+    self.boundary_ids = os.listdir(boundaries_dir)
     self.images_fps = [os.path.join(images_dir, image_id) for image_id in self.image_ids]
     self.masks_fps = [os.path.join(masks_dir, mask_id) for mask_id in self.mask_ids]
+    self.boundaries_fps = [os.path.join(boundaries_dir, boundary_id) for boundary_id in self.boundary_ids]
     self.images_dir = images_dir
     self.masks_dir = masks_dir
+    self.boundaries_dir = boundaries_dir
     self.transform = transform
     self.preprocessing = preprocessing
     self.classes = classes
@@ -49,13 +53,11 @@ class CellDataset(Dataset):
           if self.preprocessing:
               sample = self.preprocessing(image=image, mask=mask)
               image, mask = sample['image'], sample['mask']
-          label_boundary = boundary_label_2d(label=mask, algorithm='dilation') 
 
           
 
           sample = {'image': image,
                       'mask': mask,
-                      'boundary_mask': label_boundary
                       }
 
           

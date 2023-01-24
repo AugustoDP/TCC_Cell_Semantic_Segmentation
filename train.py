@@ -34,12 +34,14 @@ from utils import (
   add_class_to_image_name,
   threshold_masks,
   split_train_val_set,
-  generate_augmented_images
+  generate_augmented_images,
+  create_boundary_masks
 )
 
 MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
-DATASET_NAMES = ['Fluo-C2DL-MSC', 'Fluo-N2DH-GOWT1', 'DIC-C2DH-HeLa']
+MAIN_BOUNDARY_DIR = '/content/TCC_Cell_Semantic_Segmentation/BOUNDARY'
+DATASET_NAMES = ['Cell']
 TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
 TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
 BATCH_SIZE = 1
@@ -285,32 +287,35 @@ def main():
   if os.path.exists(MAIN_MASK_DIR):
     shutil.rmtree(MAIN_MASK_DIR)
   os.mkdir(MAIN_MASK_DIR)
+  if os.path.exists(MAIN_BOUNDARY_DIR):
+    shutil.rmtree(MAIN_BOUNDARY_DIR)
+  os.mkdir(MAIN_BOUNDARY_DIR)
 
   add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
-  threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
-  train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
-  img_list = os.listdir(train_img_dir)
-  generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
-  train_ds = get_loaders(
-      train_img_dir=train_img_dir,
-      train_mask_dir=train_mask_dir,
-      batch_size=BATCH_SIZE,
-      max_size=IMAGE_SIZE,
-      train_transform=get_training_augmentation(),
-      train_classes=DATASET_NAMES,
-      train_preprocessing=get_preprocessing(preprocessing_fn)
-      )
-  val_ds = get_loaders(
-    train_img_dir=val_img_dir,
-    train_mask_dir=val_mask_dir,
-    batch_size=BATCH_SIZE,
-    max_size=IMAGE_SIZE,
-    train_transform=get_validation_augmentation(),
-    train_classes=DATASET_NAMES,
-    train_preprocessing=get_preprocessing(preprocessing_fn)
-    )
-  print("dataset", len(train_ds))
+  #threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
+  create_boundary_masks(MAIN_MASK_DIR, MAIN_BOUNDARY_DIR)
+  # train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
+  # img_list = os.listdir(train_img_dir)
+  # generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
+  # train_ds = get_loaders(
+  #     train_img_dir=train_img_dir,
+  #     train_mask_dir=train_mask_dir,
+  #     batch_size=BATCH_SIZE,
+  #     max_size=IMAGE_SIZE,
+  #     train_transform=get_training_augmentation(),
+  #     train_classes=DATASET_NAMES,
+  #     train_preprocessing=get_preprocessing(preprocessing_fn)
+  #     )
+  # val_ds = get_loaders(
+  #   train_img_dir=val_img_dir,
+  #   train_mask_dir=val_mask_dir,
+  #   batch_size=BATCH_SIZE,
+  #   max_size=IMAGE_SIZE,
+  #   train_transform=get_validation_augmentation(),
+  #   train_classes=DATASET_NAMES,
+  #   train_preprocessing=get_preprocessing(preprocessing_fn)
+  #   )
   #print(sample['image'].shape, sample['mask'].shape)
   #visualize(image=image, mask=mask)
   
@@ -318,9 +323,9 @@ def main():
   # train_ds.__apply__(IMAGES_TO_GENERATE)
   # train_ds.__read_augmented__()
 
-  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
-  # Distribute training over GPUs
-  model = nn.DataParallel(model)
+  # model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
+  # # Distribute training over GPUs
+  # model = nn.DataParallel(model)
 
 
 
@@ -338,19 +343,13 @@ def main():
   #           n_channels=3,
   #           augmentation_ratio = AUGMENTATION_PER_IMAGE)
 
-  train_model(model=model, 
-            device=device,
-            training_set=train_ds,
-            validation_set=val_ds,
-            epochs=EPOCHS,
-            n_classes=NUM_CLASSES
-            )
-
-  # model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
-  # model = train_fn(train_ds, model)
-  # save_model_path = os.path.join(RESULTS_PATH, 'modelUNET.h5')
-  # save_checkpoint(model, save_model_path)
-  # predict(model, TEST_IMG)
+  # train_model(model=model, 
+  #           device=device,
+  #           training_set=train_ds,
+  #           validation_set=val_ds,
+  #           epochs=EPOCHS,
+  #           n_classes=NUM_CLASSES
+  #           )
 
 
 if __name__ == "__main__":

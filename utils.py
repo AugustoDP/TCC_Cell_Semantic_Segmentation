@@ -203,5 +203,13 @@ def boundary_label_2d(label, algorithm='dilation'):
 
     return label_boundary
 
-
-
+def create_boundary_masks(mask_dir, dst_dir):
+  mask_list = os.listdir(mask_dir)
+  mask_list.sort()
+  os.chdir(dst_dir) 
+  for mask_filename in mask_list:
+    mask_fp = f"{mask_dir}/{mask_filename}"
+    mask = cv2.imread(mask_fp, cv2.IMREAD_UNCHANGED)
+    label_boundary = boundary_label_2d(label=mask, algorithm='dilation') 
+    boundary_filename = f"{dst_dir}/b_{mask_filename}" 
+    cv2.imwrite(boundary_filename, label_boundary)
