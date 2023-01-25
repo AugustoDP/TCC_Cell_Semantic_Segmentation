@@ -295,9 +295,10 @@ def main():
   add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
   #threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
   create_boundary_masks(MAIN_MASK_DIR, MAIN_BOUNDARY_DIR)
-  # train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
-  # img_list = os.listdir(train_img_dir)
-  # generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
+
+  train_img_dir, val_img_dir, train_mask_dir, val_mask_dir, train_boundary_dir, val_boundary_dir =   split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, MAIN_BOUNDARY_DIR, TRAIN_VAL_SPLIT)
+
+  generate_augmented_images(train_img_dir, train_mask_dir, train_boundary_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
   # train_ds = get_loaders(
   #     train_img_dir=train_img_dir,
   #     train_mask_dir=train_mask_dir,
