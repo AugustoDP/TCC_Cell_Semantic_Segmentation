@@ -62,7 +62,7 @@ NUM_CLASSES = 3
 ACTIVATION = "softmax2d"
 
 
-def train(net, datasets, configs, device, path_models):
+def train(net, datasets, configs, device, path_models, lr, epochs):
     """ Train the model.
 
     :param net: Model/Network to train.
@@ -96,7 +96,7 @@ def train(net, datasets, configs, device, path_models):
     criterion = get_loss(configs['loss'], configs['label_type'])
 
     # Optimizer
-    optimizer = optim.Adam(net.parameters(), lr=configs['learning_rate'], betas=(0.9, 0.999), eps=1e-08, weight_decay=0,
+    optimizer = optim.Adam(net.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0,
                            amsgrad=True)
 
     # Learning rate scheduler
@@ -108,10 +108,10 @@ def train(net, datasets, configs, device, path_models):
     since = time.time()
 
     # Training process
-    for epoch in range(configs['max_epochs']):
+    for epoch in range(epochs):
 
         print('-' * 10)
-        print('Epoch {}/{}'.format(epoch + 1, configs['max_epochs']))
+        print('Epoch {}/{}'.format(epoch + 1, epochs)
         print('-' * 10)
 
         start = time.time()

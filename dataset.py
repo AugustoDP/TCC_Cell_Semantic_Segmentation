@@ -47,7 +47,8 @@ class CellDataset(Dataset):
           image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
           mask = cv2.imread(self.masks_fps[i], cv2.IMREAD_UNCHANGED)
           mask = cv2.resize(mask, (self.max_size, self.max_size))
-
+          boundary = cv2.imread(self.boundaries_fps[i], cv2.IMREAD_UNCHANGED)
+          boundary = cv2.resize(mask, (self.max_size, self.max_size))
           
           # apply preprocessing
           if self.preprocessing:
@@ -58,6 +59,7 @@ class CellDataset(Dataset):
 
           sample = {'image': image,
                       'mask': mask,
+                      'boundary' : boundary
                       }
 
           
