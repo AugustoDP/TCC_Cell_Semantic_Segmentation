@@ -31,7 +31,7 @@ def get_loaders(
   train_ds = CellDataset(
     images_dir=train_img_dir,
     masks_dir=train_mask_dir,
-    boundary_dir=train_boundary_dir,
+    boundaries_dir=train_boundary_dir,
     size=max_size,
     transform=train_transform,
     classes=train_classes,
