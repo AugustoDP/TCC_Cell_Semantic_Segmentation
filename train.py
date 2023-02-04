@@ -39,25 +39,31 @@ from utils import (
 
 MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
-DATASET_NAMES = ['Fluo-C2DL-MSC', 'Fluo-N2DH-GOWT1', 'DIC-C2DH-HeLa']
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
+MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
+MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
+DATASET_NAMES = ['DIC-C2DH-HeLa']
+TESTSET_NAMES = ['Fluo-C2DL-MSC']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG']
 BATCH_SIZE = 1
-EPOCHS = 35
+EPOCHS = 50
 LR = 0.001
-LOAD_MODEL = False
+LOAD_MODEL = True
 IMAGE_SIZE = 256
 OPTIMIZER = 'Adam'
-LOSS = sm.losses.DiceLoss
-METRICS = "accuracy"#sm.metrics.iou_score
+LOSS = sm.utils.losses.DiceLoss()
+METRICS = [sm.utils.metrics.IoU(threshold=0.5),]
 BACKBONE = 'timm-efficientnet-b0'
 ENCODER_WEIGHTS = 'imagenet'
-AUGMENTATION_PER_IMAGE = 5
+AUGMENTATION_PER_IMAGE = 8
 TRAIN_VAL_SPLIT = 0.8
 TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
 RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store model results
-NUM_CLASSES = 3
-ACTIVATION = "softmax2d"
+NUM_CLASSES = 1
+ACTIVATION = "sigmoid"
+TEST_MODEL = True
 
 def train_fn(model, 
             device,
@@ -232,7 +238,7 @@ def train_model(model,
             logging.info('Created checkpoint directory')
           except OSError:
               pass
-          torch.save(model,
+          torch.save(model.state_dict(),
                       RESULTS_PATH + f'CP_epoch{i + 1}.pth')
           logging.info(f'Checkpoint {i + 1} saved !')
       if i == 20:
@@ -253,6 +259,34 @@ def train_model(model,
 #   prediction_image_name = 'test_' + os.path.basename(image_path[:-4]) + '.png' 
 #   output_path = os.path.join(RESULTS_PATH, prediction_image_name)
 #   plt.imsave(output_path, prediction_image, cmap='gray')
+
+def test_model(best_model, 
+            device,
+            test_set,
+            ):
+
+
+  test_loader = DataLoader(test_set, batch_size=1, shuffle=False, num_workers=0)
+  # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
+  # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
+  loss = sm.utils.losses.DiceLoss()
+  metrics = [
+      sm.utils.metrics.IoU(threshold=0.5),
+  ]
+
+
+    # evaluate model on test set
+  test_epoch = sm.utils.train.ValidEpoch(
+      model=best_model,
+      loss=loss,
+      metrics=metrics,
+      device=device,
+      verbose=True,
+  )
+
+  logs = test_epoch.run(test_loader)
+
+
 
 # helper function for data visualization
 def visualize(**images):
@@ -286,39 +320,16 @@ def main():
     shutil.rmtree(MAIN_MASK_DIR)
   os.mkdir(MAIN_MASK_DIR)
 
-  add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
-  add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
-  threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
-  train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
-  img_list = os.listdir(train_img_dir)
-  generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
-  train_ds = get_loaders(
-      train_img_dir=train_img_dir,
-      train_mask_dir=train_mask_dir,
-      batch_size=BATCH_SIZE,
-      max_size=IMAGE_SIZE,
-      train_transform=get_training_augmentation(),
-      train_classes=DATASET_NAMES,
-      train_preprocessing=get_preprocessing(preprocessing_fn)
-      )
-  val_ds = get_loaders(
-    train_img_dir=val_img_dir,
-    train_mask_dir=val_mask_dir,
-    batch_size=BATCH_SIZE,
-    max_size=IMAGE_SIZE,
-    train_transform=get_validation_augmentation(),
-    train_classes=DATASET_NAMES,
-    train_preprocessing=get_preprocessing(preprocessing_fn)
-    )
-  print("dataset", len(train_ds))
-  #print(sample['image'].shape, sample['mask'].shape)
-  #visualize(image=image, mask=mask)
-  
-
-  # train_ds.__apply__(IMAGES_TO_GENERATE)
-  # train_ds.__read_augmented__()
+  if os.path.exists(MAIN_TEST_IMAGE_DIR):
+    shutil.rmtree(MAIN_TEST_IMAGE_DIR)
+  os.mkdir(MAIN_TEST_IMAGE_DIR)
+  if os.path.exists(MAIN_TEST_MASK_DIR):
+    shutil.rmtree(MAIN_TEST_MASK_DIR)
+  os.mkdir(MAIN_TEST_MASK_DIR)
 
   model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
+
+
   # Distribute training over GPUs
   model = nn.DataParallel(model)
 
@@ -338,19 +349,59 @@ def main():
   #           n_channels=3,
   #           augmentation_ratio = AUGMENTATION_PER_IMAGE)
 
-  train_model(model=model, 
-            device=device,
-            training_set=train_ds,
-            validation_set=val_ds,
-            epochs=EPOCHS,
-            n_classes=NUM_CLASSES
-            )
+  # If want to load model or train
+  if LOAD_MODEL:
+    model.load_state_dict(torch.load('/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch50.pth'))
+  else:
+    add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
+    add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
+    threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
+    train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
+    generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
+    train_ds = get_loaders(
+        train_img_dir=train_img_dir,
+        train_mask_dir=train_mask_dir,
+        batch_size=BATCH_SIZE,
+        max_size=IMAGE_SIZE,
+        train_transform=get_training_augmentation(),
+        train_classes=DATASET_NAMES,
+        train_preprocessing=get_preprocessing(preprocessing_fn)
+        )
+    val_ds = get_loaders(
+      train_img_dir=val_img_dir,
+      train_mask_dir=val_mask_dir,
+      batch_size=BATCH_SIZE,
+      max_size=IMAGE_SIZE,
+      train_transform=get_validation_augmentation(),
+      train_classes=DATASET_NAMES,
+      train_preprocessing=get_preprocessing(preprocessing_fn)
+      )
+    train_model(model=model, 
+              device=device,
+              training_set=train_ds,
+              validation_set=val_ds,
+              epochs=EPOCHS,
+              n_classes=NUM_CLASSES
+              )
 
-  # model.compile(optimizer=OPTIMIZER, loss=LOSS, metrics=[METRICS])
-  # model = train_fn(train_ds, model)
-  # save_model_path = os.path.join(RESULTS_PATH, 'modelUNET.h5')
-  # save_checkpoint(model, save_model_path)
-  # predict(model, TEST_IMG)
+  # If have a model ready to test
+  if TEST_MODEL:
+    add_class_to_image_name(TESTSET_NAMES, TEST_IMG_DIRS, MAIN_TEST_IMAGE_DIR)
+    add_class_to_image_name(TESTSET_NAMES, TEST_MASK_DIRS, MAIN_TEST_MASK_DIR)
+    threshold_masks(TESTSET_NAMES, MAIN_TEST_MASK_DIR)
+    generate_augmented_images(MAIN_TEST_IMAGE_DIR, MAIN_TEST_MASK_DIR, AUGMENTATION_PER_IMAGE, get_training_augmentation())
+    test_ds = get_loaders(
+        train_img_dir=MAIN_TEST_IMAGE_DIR,
+        train_mask_dir=MAIN_TEST_MASK_DIR,
+        batch_size=BATCH_SIZE,
+        max_size=IMAGE_SIZE,
+        train_transform=get_validation_augmentation(),
+        train_classes=TESTSET_NAMES,
+        train_preprocessing=get_preprocessing(preprocessing_fn)
+        )
+    test_model(model, test_ds, device)
+
+  
 
 
 if __name__ == "__main__":
