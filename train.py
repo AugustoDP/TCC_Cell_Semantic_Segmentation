@@ -51,6 +51,7 @@ BATCH_SIZE = 1
 EPOCHS = 50
 LR = 0.001
 LOAD_MODEL = True
+TRAIN_MODEL = False
 IMAGE_SIZE = 256
 OPTIMIZER = 'Adam'
 LOSS = sm.utils.losses.DiceLoss()
@@ -286,8 +287,6 @@ def test_model(best_model,
 
   logs = test_epoch.run(test_loader)
 
-
-
 # helper function for data visualization
 def visualize(**images):
     """PLot images in one row."""
@@ -351,8 +350,8 @@ def main():
 
   # If want to load model or train
   if LOAD_MODEL:
-    model.load_state_dict(torch.load('/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch50.pth'))
-  else:
+    model.load_state_dict(torch.load('/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch50.pth', map_location=device))
+  if TRAIN_MODEL:
     add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
     add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
     threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
@@ -389,7 +388,6 @@ def main():
     add_class_to_image_name(TESTSET_NAMES, TEST_IMG_DIRS, MAIN_TEST_IMAGE_DIR)
     add_class_to_image_name(TESTSET_NAMES, TEST_MASK_DIRS, MAIN_TEST_MASK_DIR)
     threshold_masks(TESTSET_NAMES, MAIN_TEST_MASK_DIR)
-    generate_augmented_images(MAIN_TEST_IMAGE_DIR, MAIN_TEST_MASK_DIR, AUGMENTATION_PER_IMAGE, get_training_augmentation())
     test_ds = get_loaders(
         train_img_dir=MAIN_TEST_IMAGE_DIR,
         train_mask_dir=MAIN_TEST_MASK_DIR,
@@ -399,7 +397,7 @@ def main():
         train_classes=TESTSET_NAMES,
         train_preprocessing=get_preprocessing(preprocessing_fn)
         )
-    test_model(model, test_ds, device)
+    test_model(best_model=model, device=device, test_set=test_ds)
 
   
 
