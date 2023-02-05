@@ -41,14 +41,14 @@ MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
 MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
-DATASET_NAMES = ['DIC-C2DH-HeLa']
+DATASET_NAMES = ['Fluo-N2DH-GOWT1']
 TESTSET_NAMES = ['Fluo-C2DL-MSC']
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG']
-TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01']
-TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02_ST/SEG']
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG']
 BATCH_SIZE = 1
-EPOCHS = 50
+EPOCHS = 40
 LR = 0.001
 LOAD_MODEL = True
 TRAIN_MODEL = False
@@ -65,6 +65,7 @@ RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store 
 NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
 TEST_MODEL = True
+MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch40.pth'
 
 def train_fn(model, 
             device,
@@ -350,7 +351,7 @@ def main():
 
   # If want to load model or train
   if LOAD_MODEL:
-    model.load_state_dict(torch.load('/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch50.pth', map_location=device))
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
   if TRAIN_MODEL:
     add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
     add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
