@@ -38,11 +38,11 @@ def get_loaders(
 
 def add_class_to_image_name(dataset_names, dir_list, dst_dir):
   for d_name in dataset_names:
-    for directory in dir_list:
+    for i, directory in enumerate(dir_list):
       if d_name in directory:
         for filename in os.listdir(directory):          
           src = f"{directory}/{filename}"
-          dst = f"{dst_dir}/{d_name}_{filename}"
+          dst = f"{dst_dir}/{d_name}_{i}_{filename}"
           shutil.copy(src, dst)
 
 def threshold_masks(dataset_names, mask_dir):
