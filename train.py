@@ -47,24 +47,23 @@ TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', 
 TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02_ST/SEG']
 TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02']
 TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG']
-BATCH_SIZE = 1
-EPOCHS = 40
+BATCH_SIZE = 8
+EPOCHS = 60
 LR = 0.001
-LOAD_MODEL = True
-TRAIN_MODEL = False
+LOAD_MODEL = False
+TRAIN_MODEL = True
 IMAGE_SIZE = 256
 OPTIMIZER = 'Adam'
 LOSS = sm.utils.losses.DiceLoss()
 METRICS = [sm.utils.metrics.IoU(threshold=0.5),]
 BACKBONE = 'timm-efficientnet-b0'
 ENCODER_WEIGHTS = 'imagenet'
-AUGMENTATION_PER_IMAGE = 8
-TRAIN_VAL_SPLIT = 0.8
-TEST_IMG = '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02/t000.tif'
-RESULTS_PATH ="/content/TCC_Cell_Semantic_Segmentation/Results" # path to store model results
+#AUGMENTATION_PER_IMAGE = 8
+TRAIN_VAL_SPLIT = 0.9
+TEST_IMG = ''
 NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
-TEST_MODEL = True
+TEST_MODEL = False
 MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch40.pth'
 
 def train_fn(model, 
@@ -191,7 +190,7 @@ def train_model(model,
   
 ):
 
-  train_loader = DataLoader(training_set, batch_size=8, shuffle=True, num_workers=0)
+  train_loader = DataLoader(training_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
   valid_loader = DataLoader(validation_set, batch_size=1, shuffle=False, num_workers=0)
   # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
   # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
@@ -286,20 +285,7 @@ def test_model(best_model,
       verbose=True,
   )
 
-  logs = test_epoch.run(test_loader)
-
-# helper function for data visualization
-def visualize(**images):
-    """PLot images in one row."""
-    n = len(images)
-    plt.figure(figsize=(16, 5))
-    for i, (name, image) in enumerate(images.items()):
-        plt.subplot(1, n, i + 1)
-        plt.xticks([])
-        plt.yticks([])
-        plt.title(' '.join(name.split('_')).title())
-        plt.imshow(image)
-    plt.show()
+  logs = test_epoch.run(test_loader)       
     
     
 
@@ -357,7 +343,7 @@ def main():
     add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
     threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
     train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
-    generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
+    #generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
     train_ds = get_loaders(
         train_img_dir=train_img_dir,
         train_mask_dir=train_mask_dir,
@@ -376,6 +362,7 @@ def main():
       train_classes=DATASET_NAMES,
       train_preprocessing=get_preprocessing(preprocessing_fn)
       )
+
     train_model(model=model, 
               device=device,
               training_set=train_ds,
