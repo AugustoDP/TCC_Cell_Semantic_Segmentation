@@ -1,5 +1,5 @@
 #import tensorflow as tf
-from dataset import CellDataset
+from configs.dataset import CellDataset
 import shutil
 import numpy as np
 import os
