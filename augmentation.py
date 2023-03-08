@@ -1,6 +1,27 @@
-
-
+import numpy as np
 import albumentations as albu
+
+
+
+
+
+transforms = [
+      albu.Equalize(p=1),
+      albu.Rotate(p=1),
+      albu.Solarize(p=1),
+      albu.ColorJitter(p=1),
+      albu.Posterize(p=1),
+      albu.RandomContrast(p=1),
+      albu.RandomBrightness(p=1),
+      albu.Sharpen(p=1),
+
+    ]
+
+
+def rand_augment(N):
+  sampled_ops = np.random.choice(transforms, N)
+  return albu.Compose(sampled_ops)
+
 
 def get_training_augmentation():
     train_transform = [

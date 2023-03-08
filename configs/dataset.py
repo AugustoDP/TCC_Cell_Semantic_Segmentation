@@ -4,7 +4,7 @@ import cv2
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
-
+from augmentation import rand_augment
 class CellDataset(Dataset):
 
     def __init__(self,
@@ -58,7 +58,8 @@ class CellDataset(Dataset):
 
         # apply augmentations
         if self.transform:
-            sample = self.transform(image=image, mask=mask)
+            aug = rand_augment(3)
+            sample = aug(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']            
         # apply preprocessing
         if self.preprocessing:

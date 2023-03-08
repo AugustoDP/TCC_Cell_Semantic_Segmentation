@@ -65,7 +65,7 @@ NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
 TEST_MODEL = False
 MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch40.pth'
-
+RESULTS_PATH = '/content/TCC_Cell_Semantic_Segmentation/Results'
 def train_fn(model, 
             device,
             training_set,
