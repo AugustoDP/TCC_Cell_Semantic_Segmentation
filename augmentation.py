@@ -6,15 +6,18 @@ import albumentations as albu
 
 
 transforms = [
+      albu.NoOp(p=1),
       albu.Equalize(p=1),
       albu.Rotate(p=1),
       albu.Solarize(p=1),
       albu.ColorJitter(p=1),
       albu.Posterize(p=1),
-      albu.RandomContrast(p=1),
-      albu.RandomBrightness(p=1),
+      albu.RandomBrightnessContrast(p=1),
       albu.Sharpen(p=1),
-
+      albu.RandomGridShuffle (grid=(3, 3), p=1),
+      albu.InvertImg(p=1),
+      albu.CoarseDropout(max_holes=1, max_height=75, max_width=75, fill_value=0, mask_fill_value=0, p=1),
+      albu.ElasticTransform(p=1, alpha=150, sigma=6, alpha_affine=6),
     ]
 
 
