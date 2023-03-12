@@ -1,9 +1,25 @@
 import numpy as np
 import albumentations as albu
 
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-
-
+def circle_rotate(image, **kwargs):
+    radius=np.random.randint(60, 121)
+    x=np.random.randint(radius, 257-radius)
+    y=np.random.randint(radius, 257-radius)
+    degree=np.random.randint(-90, 91)
+    box = (x-radius,y-radius,x+radius+1,y+radius+1)
+    img = Image.fromarray(image)
+    background = Image.new("RGBA", img.size, (0,0,0,0))
+    mask = Image.new("RGBA", img.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse(box, fill='green', outline=None)
+    new_img = Image.composite(img, background, mask)
+    crop = new_img.crop(box=box)
+    crop = crop.rotate(degree)
+    background.paste(crop, (x-radius, y-radius))
+    new_img = Image.composite(background, img, mask)
+    return np.array(new_img)
 
 transforms = [
       albu.NoOp(p=1),
@@ -18,6 +34,50 @@ transforms = [
       albu.InvertImg(p=1),
       albu.CoarseDropout(max_holes=1, max_height=75, max_width=75, fill_value=0, mask_fill_value=0, p=1),
       albu.ElasticTransform(p=1, alpha=150, sigma=6, alpha_affine=6),
+      #albu.MultiplicativeNoise(multiplier=(0.9, 1.6), per_channel=False, elementwise=False, p=1),
+      albu.GaussNoise(var_limit=(25.0, 75.0), mean=128, per_channel=True, p=1),
+      #albu.CropNonEmptyMaskIfExists(height, width, ignore_values=None, ignore_channels=None, p=1.0)
+      # Affine operations for translate x and y, shear x and y
+      albu.Affine(translate_percent={"x": (0,0.5)}, 
+                  interpolation=1,
+                  mask_interpolation=0, 
+                  cval=0, 
+                  cval_mask=0, 
+                  mode=0,                 
+                  fit_output=False, 
+                  keep_ratio=False,
+                  p=1),
+      albu.Affine(translate_percent={"y": (0,0.5)}, 
+                  interpolation=1,
+                  mask_interpolation=0, 
+                  cval=0, 
+                  cval_mask=0, 
+                  mode=0,                 
+                  fit_output=False, 
+                  keep_ratio=False,
+                  p=1),
+      albu.Affine(shear={"x": (0,0.5)},
+                  interpolation=1,
+                  mask_interpolation=0, 
+                  cval=0, 
+                  cval_mask=0, 
+                  mode=0,                 
+                  fit_output=False, 
+                  keep_ratio=False,
+                  p=1),
+      albu.Affine(shear={"y": (0,0.5)},
+                  interpolation=1,
+                  mask_interpolation=0, 
+                  cval=0, 
+                  cval_mask=0, 
+                  mode=0,                 
+                  fit_output=False, 
+                  keep_ratio=False,
+                  p=1),
+      #Random Local Rotate
+      albu.Lambda(image=circle_rotate,
+                name='circle_rotate',                 
+                p=1.0)
     ]
 
 

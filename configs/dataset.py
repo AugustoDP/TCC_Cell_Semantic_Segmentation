@@ -58,7 +58,7 @@ class CellDataset(Dataset):
 
         # apply augmentations
         if self.transform:
-            aug = rand_augment(3)
+            aug = rand_augment(2)
             sample = aug(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']            
         # apply preprocessing
