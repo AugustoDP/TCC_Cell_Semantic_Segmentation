@@ -56,8 +56,10 @@ def rotate_image(image, angle):
 def circle_rotate(image, **kwargs):
 
     box = (x-radius,y-radius,x+radius+1,y+radius+1)
-    img = Image.fromarray(image)
-    if image.shape == (256,256):
+    
+    if image.shape == (256,256, 1):
+      image = np.squeeze(image, axis=2)  
+      img = Image.fromarray(image)
       background = Image.new("I;16", img.size, 0)
       mask = np.zeros(image.shape[:2], dtype="uint8")
       cv2.circle(mask, (x, y), radius, 255, -1)
@@ -69,8 +71,10 @@ def circle_rotate(image, **kwargs):
       back = np.array(background)
       comb_img = image.copy()
       comb_img[mask>0] = back[mask>0]
+      comb_img = np.expand_dims(comb_img, axis=-1)
       new_img = comb_img
     else:
+      img = Image.fromarray(image)
       background = Image.new("RGBA", img.size, (0,0,0,0))
       mask = Image.new("RGBA", img.size, 0)
       draw = ImageDraw.Draw(mask)
@@ -162,12 +166,13 @@ def generate_cutmix_image(image, **kwargs):
     # copy image to transform
     image_updated = image
     # Change operation accordingly if input image is mask or regular RGB image
-    if image.shape == (256, 256):
+    if image.shape == (256, 256, 1):
       # get image to sample cut from
       image_to_cut = cv2.imread(masks_fp_dict[rand_dataset][rand_index], cv2.IMREAD_UNCHANGED)
       image_to_cut = cv2.resize(image_to_cut, (256, 256))
+      image_to_cut = np.expand_dims(image_to_cut, axis=-1)
       # paste cut to image
-      image_updated[bbx1:bbx2, bby1:bby2] = image_to_cut[bbx1:bbx2, bby1:bby2]
+      image_updated[bbx1:bbx2, bby1:bby2,:] = image_to_cut[bbx1:bbx2, bby1:bby2, :]
     else:
       # get image to sample cut from
       image_to_cut = cv2.imread(images_fp_dict[rand_dataset][rand_index])

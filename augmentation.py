@@ -65,14 +65,14 @@ transforms = [
                   keep_ratio=False,
                   p=1),
       #Random Local Rotate
-      # albu.Lambda(image=circle_rotate,
-      #             mask=circle_rotate,
-      #             name='circle_rotate',                 
-      #             p=1.0),
-      # albu.Lambda(image=generate_cutmix_image,
-      #             mask=generate_cutmix_image,
-      #             name='generate_cutmix_image',                 
-      #             p=1.0),    
+      albu.Lambda(image=circle_rotate,
+                  mask=circle_rotate,
+                  name='circle_rotate',                 
+                  p=1.0),
+      albu.Lambda(image=generate_cutmix_image,
+                  mask=generate_cutmix_image,
+                  name='generate_cutmix_image',                 
+                  p=1.0),    
     ]
 
 def rand_augment(N):

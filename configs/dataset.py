@@ -55,7 +55,7 @@ class CellDataset(Dataset):
         # # extract certain classes from mask (e.g. cars)
         masks = [(mask == v) for v in self.class_values]
         mask = np.stack(masks, axis=-1).astype('float')
-
+        
         # apply augmentations
         if self.transform:
             aug = rand_augment(1)
