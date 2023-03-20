@@ -41,14 +41,14 @@ MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
 MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
-DATASET_NAMES = ['Fluo-N2DH-GOWT1']
-TESTSET_NAMES = ['Fluo-C2DL-MSC']
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02_ST/SEG']
-TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02']
-TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG']
+DATASET_NAMES = ['Fluo-C2DL-MSC']
+TESTSET_NAMES = ['DIC-C2DH-HeLa']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG']
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG']
 BATCH_SIZE = 8
-EPOCHS = 60
+EPOCHS = 50
 LR = 0.001
 LOAD_MODEL = False
 TRAIN_MODEL = True
@@ -63,133 +63,17 @@ TRAIN_VAL_SPLIT = 0.9
 TEST_IMG = ''
 NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
-TEST_MODEL = False
+TEST_MODEL = True
 MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch40.pth'
 RESULTS_PATH = '/content/TCC_Cell_Semantic_Segmentation/Results'
-def train_fn(model, 
-            device,
-            training_set,
-            validation_set,
-            dir_checkpoint,
-            epochs=50,
-            batch_size=2,
-            lr=0.001,
-            save_cp=True,
-            img_scale=1,
-            n_classes=2,
-            n_channels=3,
-            augmentation_ratio = 8):
-
-  train = training_set 
-  val = validation_set
-  n_train = len(train)
-  n_val = len(val)
-  train_loader = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
-  val_loader = DataLoader(val, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
-
-
-  # Sets the effective batch size according to the batch size and the data augmentation ratio
-  batch_size = (1 + augmentation_ratio)*batch_size
-
-  # Prepares the summary file
-  writer = SummaryWriter(comment=f'LR_{lr}_BS_{batch_size}_SCALE_{img_scale}')
-  global_step = 0
-
-  logging.info(f'''Starting training:
-      Epochs:          {epochs}
-      Batch size:      {batch_size}
-      Learning rate:   {lr}
-      Training size:   {n_train}
-      Validation size: {n_val}
-      Checkpoints:     {save_cp}
-      Device:          {device.type}
-      Images scaling:  {img_scale}
-      Augmentation ratio: {augmentation_ratio}
-  ''')
-
-  # Choose the optimizer and scheduler 
-  optimizer = optim.Adam(model.parameters(), lr=lr)
-  scheduler = optim.lr_scheduler.StepLR(optimizer, epochs//3, gamma=0.1, verbose=True)
-
-  # Train loop
-  for epoch in range(epochs):
-      model.train()
-      epoch_loss = 0
-      with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
-          for batch in train_loader:
-              imgs = batch['image']
-              true_masks = batch['mask']
-              # DataLoaders return lists of tensors. TODO: Concatenate the lists inside the DataLoaders
-              imgs = torch.cat(imgs, dim = 0)
-              true_masks = torch.cat(true_masks, dim = 0)
-
-              assert imgs.shape[1] == n_channels, \
-                  f'Network has been defined with {n_channels} input channels, ' \
-                  f'but loaded images have {imgs.shape[1]} channels. Please check that ' \
-                  'the images are loaded correctly.'
-
-              imgs = imgs.to(device=device, dtype=torch.float32)
-              mask_type = torch.float32 if n_classes == 1 else torch.long
-              true_masks = true_masks.to(device=device, dtype=mask_type)
-              masks_pred = model(imgs)                  
-              # Compute loss
-              loss = focal_loss(masks_pred, true_masks.squeeze(0), alpha=0.25, gamma = 2, reduction='mean').unsqueeze(0)
-              loss += dice_loss(masks_pred, true_masks.squeeze(0), True, k = 0.75)
-
-              epoch_loss += loss.item()
-              writer.add_scalar('Loss/train', loss.item(), global_step)
-              pbar.set_postfix(**{'loss (batch)': loss.item()})
-
-              optimizer.zero_grad()
-              loss.backward()
-              nn.utils.clip_grad_value_(model.parameters(), 0.1)
-              optimizer.step()
-
-              pbar.update(imgs.shape[0]//(1 + augmentation_ratio))
-              global_step += 1
-              if global_step % (n_train // (batch_size / (1 + augmentation_ratio))) == 0:
-                  for tag, value in model.named_parameters():
-                      tag = tag.replace('.', '/')
-                      
-                      try:
-                          writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
-                          writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
-                      except:
-                          pass
-                  
-                  epoch_score = eval_net(model, train_loader, device)
-                  val_score = eval_net(model, val_loader, device)
-                  writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
-
-                  if n_classes > 1:
-                      logging.info('Validation loss: {}'.format(val_score))
-                      writer.add_scalar('Generalized dice loss/train', epoch_score, global_step)
-                      writer.add_scalar('Generalized dice loss/test', val_score, global_step)
-                  else:
-                      logging.info('Validation loss: {}'.format(val_score))
-                      writer.add_scalar('Dice loss/train', epoch_score, global_step)
-                      writer.add_scalar('Dice loss/test', val_score, global_step)       
-      scheduler.step()         
-      if save_cp:
-          try:
-              os.mkdir(dir_checkpoint)
-              logging.info('Created checkpoint directory')
-          except OSError:
-              pass
-          torch.save(model.state_dict(),
-                      dir_checkpoint + f'CP_epoch{epoch + 1}.pth')
-          logging.info(f'Checkpoint {epoch + 1} saved !')
-  writer.close()
 
 def train_model(model, 
             device,
             training_set,
             validation_set,
             epochs=50,
-            n_classes=2,
-  
+            n_classes=2,  
 ):
-
   train_loader = DataLoader(training_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
   valid_loader = DataLoader(validation_set, batch_size=1, shuffle=False, num_workers=0)
   # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
@@ -220,7 +104,7 @@ def train_model(model,
       device=device,
       verbose=True,
   )
-  # train model for 40 epochs
+  # train model for x epochs
 
   max_score = 0
 
@@ -242,7 +126,10 @@ def train_model(model,
           torch.save(model.state_dict(),
                       RESULTS_PATH + f'CP_epoch{i + 1}.pth')
           logging.info(f'Checkpoint {i + 1} saved !')
-      if i == 20:
+      if i == 15:
+          optimizer.param_groups[0]['lr'] = 5e-5
+          print('Decrease decoder learning rate to 5e-5!')
+      if i == 30:
           optimizer.param_groups[0]['lr'] = 1e-5
           print('Decrease decoder learning rate to 1e-5!')
 
@@ -266,7 +153,6 @@ def test_model(best_model,
             test_set,
             ):
 
-
   test_loader = DataLoader(test_set, batch_size=1, shuffle=False, num_workers=0)
   # Dice/F1 score - https://en.wikipedia.org/wiki/S%C3%B8rensen%E2%80%93Dice_coefficient
   # IoU/Jaccard score - https://en.wikipedia.org/wiki/Jaccard_index
@@ -274,8 +160,6 @@ def test_model(best_model,
   metrics = [
       sm.utils.metrics.IoU(threshold=0.5),
   ]
-
-
     # evaluate model on test set
   test_epoch = sm.utils.train.ValidEpoch(
       model=best_model,
@@ -285,14 +169,12 @@ def test_model(best_model,
       verbose=True,
   )
 
-  logs = test_epoch.run(test_loader)       
-    
-    
+  logs = test_epoch.run(test_loader)          
+
 
 def main():
 
   logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-
   # Determine device
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   logging.info(f'Using device {device}')
@@ -318,22 +200,6 @@ def main():
 
   # Distribute training over GPUs
   model = nn.DataParallel(model)
-
-
-
-  # train_fn(model=model, 
-  #           device=device,
-  #           training_set=train_ds,
-  #           validation_set=val_ds,
-  #           dir_checkpoint=RESULTS_PATH,
-  #           epochs=EPOCHS,
-  #           batch_size=BATCH_SIZE,
-  #           lr=LR,
-  #           save_cp=True,
-  #           img_scale=1,
-  #           n_classes=NUM_CLASSES,
-  #           n_channels=3,
-  #           augmentation_ratio = AUGMENTATION_PER_IMAGE)
 
   # If want to load model or train
   if LOAD_MODEL:
