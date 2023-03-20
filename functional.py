@@ -115,7 +115,7 @@ def rand_bbox(size, lamb):
 #cutmix random seeds
 height=np.random.randint(60, 200)
 width=np.random.randint(60, 200)
-beta = round(random.uniform(0,1), 2)
+beta = 1
 lam = np.random.beta(beta, beta)
 bbx1, bby1, bbx2, bby2 = rand_bbox((256,256), lam)
 rand_dataset = np.random.choice(list(images_fp_dict.keys()))
@@ -135,7 +135,7 @@ y=np.random.randint(radius, 257-radius)
 def randomize_custom_aug_seeds():
   height=np.random.randint(60, 200)
   width=np.random.randint(60, 200)
-  beta = round(random.uniform(0,1), 2)
+  beta = 1
   lam = np.random.beta(beta, beta)
   bbx1, bby1, bbx2, bby2 = rand_bbox((256,256), lam)
 
