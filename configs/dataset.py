@@ -53,8 +53,8 @@ class CellDataset(Dataset):
         mask = cv2.imread(self.masks_fps[index], cv2.IMREAD_UNCHANGED)
         mask = cv2.resize(mask, (self.max_size, self.max_size))
         # # extract certain classes from mask (e.g. cars)
-        masks = [(mask == v) for v in self.class_values]
-        mask = np.stack(masks, axis=-1).astype('float')
+        # masks = [(mask == v) for v in self.class_values]
+        # mask = np.stack(masks, axis=-1).astype('float')
 
         # apply augmentations
         if self.transform:
@@ -63,6 +63,7 @@ class CellDataset(Dataset):
             image, mask = sample['image'], sample['mask']            
         # apply preprocessing
         if self.preprocessing:
+            mask = np.expand_dims(mask, axis=-1)
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']  
 

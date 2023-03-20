@@ -80,7 +80,7 @@ def circle_rotate(image, **kwargs):
       crop = crop.rotate(degree)
       background.paste(crop, (x-radius, y-radius))
       new_img = Image.composite(background, img, mask)
-    return (new_img)
+    return np.array(new_img)
 
 ###############################################################################
 # Here we define helper and random seeds for cutmix and RLR augmentations
@@ -160,20 +160,17 @@ def generate_cutmix_image(image, **kwargs):
     """
     
     # copy image to transform
-    image_updated = image.copy()
-    print(image.shape, bbx1, bbx2, bby1, bby2)
+    image_updated = image
     # Change operation accordingly if input image is mask or regular RGB image
     if image.shape == (256, 256):
       # get image to sample cut from
       image_to_cut = cv2.imread(masks_fp_dict[rand_dataset][rand_index], cv2.IMREAD_UNCHANGED)
-      print(image_to_cut.shape, masks_fp_dict[rand_dataset][rand_index])
       image_to_cut = cv2.resize(image_to_cut, (256, 256))
       # paste cut to image
       image_updated[bbx1:bbx2, bby1:bby2] = image_to_cut[bbx1:bbx2, bby1:bby2]
     else:
       # get image to sample cut from
       image_to_cut = cv2.imread(images_fp_dict[rand_dataset][rand_index])
-      print(image_to_cut.shape, images_fp_dict[rand_dataset][rand_index])
       image_to_cut = cv2.resize(image_to_cut, (256, 256))
       # paste cut to image
       image_updated[bbx1:bbx2, bby1:bby2, :] = image_to_cut[bbx1:bbx2, bby1:bby2, :]
