@@ -42,11 +42,11 @@ MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
 MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
 DATASET_NAMES = ['Fluo-C2DL-MSC']
-TESTSET_NAMES = ['DIC-C2DH-HeLa']
+TESTSET_NAMES = ['Fluo-N2DH-SIM+']
 TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02']
 TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG']
-TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02']
-TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG']
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01_GT/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02_GT/SEG']
 BATCH_SIZE = 8
 EPOCHS = 50
 LR = 0.001
@@ -72,7 +72,7 @@ def train_model(model,
             training_set,
             validation_set,
             epochs=50,
-            n_classes=2,  
+            n_classes=1,  
 ):
   train_loader = DataLoader(training_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
   valid_loader = DataLoader(validation_set, batch_size=1, shuffle=False, num_workers=0)
@@ -195,7 +195,7 @@ def main():
     shutil.rmtree(MAIN_TEST_MASK_DIR)
   os.mkdir(MAIN_TEST_MASK_DIR)
 
-  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
+  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=None, classes=NUM_CLASSES, activation=ACTIVATION)
 
 
   # Distribute training over GPUs
@@ -224,7 +224,7 @@ def main():
       train_mask_dir=val_mask_dir,
       batch_size=BATCH_SIZE,
       max_size=IMAGE_SIZE,
-      train_transform=get_validation_augmentation(),
+      train_transform=None,
       train_classes=DATASET_NAMES,
       train_preprocessing=get_preprocessing(preprocessing_fn)
       )
@@ -247,7 +247,7 @@ def main():
         train_mask_dir=MAIN_TEST_MASK_DIR,
         batch_size=BATCH_SIZE,
         max_size=IMAGE_SIZE,
-        train_transform=get_validation_augmentation(),
+        train_transform=None,
         train_classes=TESTSET_NAMES,
         train_preprocessing=get_preprocessing(preprocessing_fn)
         )

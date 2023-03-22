@@ -47,23 +47,23 @@ class CellDataset(Dataset):
         # pixel in that channel has a value of 1.0 if the corresponding pixel from the image belongs to this class and
         # 0.0 otherwise). During augmentation search, `nn.BCEWithLogitsLoss` is used as a segmentation loss.
         # read data
-        image = cv2.imread(self.images_fps[index])
+        image = cv2.imread(self.images_fps[index], cv2.IMREAD_UNCHANGED)
         image = cv2.resize(image, (self.max_size, self.max_size))
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        image = np.array(image).astype(np.uint16)
+        image = np.uint8((image / image.max()) * 255)
         mask = cv2.imread(self.masks_fps[index], cv2.IMREAD_UNCHANGED)
         mask = cv2.resize(mask, (self.max_size, self.max_size))
         # # extract certain classes from mask (e.g. cars)
         masks = [(mask == v) for v in self.class_values]
         mask = np.stack(masks, axis=-1).astype('float')
-        
         # apply augmentations
         if self.transform:
             aug = rand_augment(1)
             sample = aug(image=image, mask=mask)
-            image, mask = sample['image'], sample['mask']            
+            image, mask = sample['image'], sample['mask']     
         # apply preprocessing
         if self.preprocessing:
-            # mask = np.expand_dims(mask, axis=-1)
             sample = self.preprocessing(image=image, mask=mask)
             image, mask = sample['image'], sample['mask']  
 

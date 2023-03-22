@@ -25,7 +25,7 @@ transforms = [
       albu.CoarseDropout(max_holes=1, max_height=75, max_width=75, fill_value=0, mask_fill_value=0, p=1),
       albu.ElasticTransform(p=1, alpha=150, sigma=6, alpha_affine=6),
       #albu.MultiplicativeNoise(multiplier=(0.9, 1.6), per_channel=False, elementwise=False, p=1),
-      albu.GaussNoise(var_limit=(25.0, 75.0), mean=128, per_channel=True, p=1),
+      albu.GaussNoise(p=1),
       #albu.CropNonEmptyMaskIfExists(height, width, ignore_values=None, ignore_channels=None, p=1.0)
       # Affine operations for translate x and y, shear x and y
       albu.Affine(translate_percent={"x": (0,0.5)}, 
@@ -69,10 +69,11 @@ transforms = [
                   mask=circle_rotate,
                   name='circle_rotate',                 
                   p=1.0),
-      albu.Lambda(image=generate_cutmix_image,
-                  mask=generate_cutmix_image,
-                  name='generate_cutmix_image',                 
-                  p=1.0),    
+      #Cut Mix
+      # albu.Lambda(image=generate_cutmix_image,
+      #             mask=generate_cutmix_image,
+      #             name='generate_cutmix_image',                 
+      #             p=1.0),    
     ]
 
 def rand_augment(N):
