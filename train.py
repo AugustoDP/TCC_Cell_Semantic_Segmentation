@@ -41,14 +41,14 @@ MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
 MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
-DATASET_NAMES = ['Fluo-C2DL-MSC']
-TESTSET_NAMES = ['Fluo-N2DH-SIM+']
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG']
-TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02']
-TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01_GT/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02_GT/SEG']
+DATASET_NAMES = ['PhC-C2DH-U373']
+TESTSET_NAMES = ['DIC-C2DH-HeLa']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/01', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/02']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/02_ST/SEG']
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG']
 BATCH_SIZE = 8
-EPOCHS = 50
+EPOCHS = 150
 LR = 0.001
 LOAD_MODEL = False
 TRAIN_MODEL = True
@@ -64,7 +64,7 @@ TEST_IMG = ''
 NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
 TEST_MODEL = True
-MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch40.pth'
+MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch117.pth'
 RESULTS_PATH = '/content/TCC_Cell_Semantic_Segmentation/Results'
 
 def train_model(model, 
@@ -107,15 +107,31 @@ def train_model(model,
   # train model for x epochs
 
   max_score = 0
-
+  current_loss = 0
+  last_loss = -1
+  stop_count = 0
   for i in range(0, epochs):
-      
+      #Stop training early to avoid overfit
+      if stop_count == 3:
+        print('Loss is not decreasing! Stopping training')
+        break
+
       print('\nEpoch: {}'.format(i))
       train_logs = train_epoch.run(train_loader)
       valid_logs = valid_epoch.run(valid_loader)
       
+      # Check if loss is changing
+      if last_loss == -1:
+        last_loss = valid_logs['dice_loss']
+      else:
+        current_loss = valid_logs['dice_loss']
+        if last_loss - current_loss < 0.001:
+          stop_count += 1
+        else:
+          stop_count = 0
+        last_loss = current_loss
+
       # do something (save model, change lr, etc.)
-         
       if max_score < valid_logs['iou_score']:
           max_score = valid_logs['iou_score']          
           try:
@@ -126,12 +142,12 @@ def train_model(model,
           torch.save(model.state_dict(),
                       RESULTS_PATH + f'CP_epoch{i + 1}.pth')
           logging.info(f'Checkpoint {i + 1} saved !')
-      if i == 15:
-          optimizer.param_groups[0]['lr'] = 5e-5
-          print('Decrease decoder learning rate to 5e-5!')
-      if i == 30:
-          optimizer.param_groups[0]['lr'] = 1e-5
-          print('Decrease decoder learning rate to 1e-5!')
+      # if i == 15:
+      #     optimizer.param_groups[0]['lr'] = 5e-5
+      #     print('Decrease decoder learning rate to 5e-5!')
+      # if i == 50:
+      #     optimizer.param_groups[0]['lr'] = 1e-5
+      #     print('Decrease decoder learning rate to 1e-5!')
 
 # def predict(model, image_path):
 #   image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)       
@@ -205,8 +221,11 @@ def main():
   if LOAD_MODEL:
     model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
   if TRAIN_MODEL:
-    add_class_to_image_name(DATASET_NAMES, TRAIN_IMG_DIRS, MAIN_IMAGE_DIR)
-    add_class_to_image_name(DATASET_NAMES, TRAIN_MASK_DIRS, MAIN_MASK_DIR)
+    add_class_to_image_name(DATASET_NAMES,
+     TRAIN_IMG_DIRS, 
+     MAIN_IMAGE_DIR, 
+     TRAIN_MASK_DIRS, 
+     MAIN_MASK_DIR)
     threshold_masks(DATASET_NAMES, MAIN_MASK_DIR)
     train_img_dir, val_img_dir, train_mask_dir, val_mask_dir = split_train_val_set(MAIN_IMAGE_DIR, MAIN_MASK_DIR, TRAIN_VAL_SPLIT)
     #generate_augmented_images(train_img_dir, train_mask_dir, AUGMENTATION_PER_IMAGE, get_training_augmentation())
@@ -239,8 +258,11 @@ def main():
 
   # If have a model ready to test
   if TEST_MODEL:
-    add_class_to_image_name(TESTSET_NAMES, TEST_IMG_DIRS, MAIN_TEST_IMAGE_DIR)
-    add_class_to_image_name(TESTSET_NAMES, TEST_MASK_DIRS, MAIN_TEST_MASK_DIR)
+    add_class_to_image_name(TESTSET_NAMES, 
+    TEST_IMG_DIRS, 
+    MAIN_TEST_IMAGE_DIR, 
+    TEST_MASK_DIRS,
+    MAIN_TEST_MASK_DIR)
     threshold_masks(TESTSET_NAMES, MAIN_TEST_MASK_DIR)
     test_ds = get_loaders(
         train_img_dir=MAIN_TEST_IMAGE_DIR,

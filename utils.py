@@ -5,6 +5,7 @@ import numpy as np
 import os
 import cv2
 #from tensorflow import keras
+import random
 from random import shuffle
 from math import floor
 
@@ -36,14 +37,30 @@ def get_loaders(
     )
   return train_ds
 
-def add_class_to_image_name(dataset_names, dir_list, dst_dir):
+def add_class_to_image_name(
+ dataset_names,
+ img_dir_list,
+ img_dst_dir, 
+ msk_dir_list, 
+ msk_dst_dir
+ ):
   for d_name in dataset_names:
-    for i, directory in enumerate(dir_list):
-      if d_name in directory:
-        for filename in os.listdir(directory):          
-          src = f"{directory}/{filename}"
-          dst = f"{dst_dir}/{d_name}_{i}_{filename}"
-          shutil.copy(src, dst)
+    i = 0
+    for img_directory, msk_directory in zip(img_dir_list, msk_dir_list):
+      if d_name in img_directory and d_name in msk_directory:
+        img_filename_list = os.listdir(img_directory)
+        msk_filename_list = os.listdir(msk_directory)
+        img_filename_list.sort()
+        msk_filename_list.sort()
+        index_list = random.sample(range(len(img_filename_list)), 48)
+        for selected_index in index_list:          
+          img_src = f"{img_directory}/{img_filename_list[selected_index]}"
+          img_dst = f"{img_dst_dir}/{d_name}_{i}_{img_filename_list[selected_index]}"
+          shutil.copy(img_src, img_dst)
+          msk_src = f"{msk_directory}/{msk_filename_list[selected_index]}"
+          msk_dst = f"{msk_dst_dir}/{d_name}_{i}_{msk_filename_list[selected_index]}"
+          shutil.copy(msk_src, msk_dst)
+      i = i + 1
 
 def threshold_masks(dataset_names, mask_dir):
   os.chdir(mask_dir)
