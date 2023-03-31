@@ -41,17 +41,17 @@ MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
 MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
-DATASET_NAMES = ['PhC-C2DH-U373']
-TESTSET_NAMES = ['DIC-C2DH-HeLa']
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/01', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/02']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/02_ST/SEG']
-TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02']
-TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG']
-BATCH_SIZE = 8
+DATASET_NAMES = ['DIC-C2DH-HeLa']
+TESTSET_NAMES = ['PhC-C2DL-PSC']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02']
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG']
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/01', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/02']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/02_ST/SEG']
+BATCH_SIZE = 1
 EPOCHS = 150
 LR = 0.001
-LOAD_MODEL = False
-TRAIN_MODEL = True
+LOAD_MODEL = True
+TRAIN_MODEL = False
 IMAGE_SIZE = 256
 OPTIMIZER = 'Adam'
 LOSS = sm.utils.losses.DiceLoss()
@@ -59,12 +59,12 @@ METRICS = [sm.utils.metrics.IoU(threshold=0.5),]
 BACKBONE = 'timm-efficientnet-b0'
 ENCODER_WEIGHTS = 'imagenet'
 #AUGMENTATION_PER_IMAGE = 8
-TRAIN_VAL_SPLIT = 0.9
+TRAIN_VAL_SPLIT = 0.8
 TEST_IMG = ''
 NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
 TEST_MODEL = True
-MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch117.pth'
+MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch66.pth'
 RESULTS_PATH = '/content/TCC_Cell_Semantic_Segmentation/Results'
 
 def train_model(model, 
@@ -112,7 +112,7 @@ def train_model(model,
   stop_count = 0
   for i in range(0, epochs):
       #Stop training early to avoid overfit
-      if stop_count == 3:
+      if stop_count == 5:
         print('Loss is not decreasing! Stopping training')
         break
 
@@ -148,7 +148,9 @@ def train_model(model,
       # if i == 50:
       #     optimizer.param_groups[0]['lr'] = 1e-5
       #     print('Decrease decoder learning rate to 1e-5!')
-
+  torch.save(model.state_dict(),
+                      RESULTS_PATH + f'CP_final_epoch.pth')
+  logging.info(f'Last Checkpoint saved !')
 # def predict(model, image_path):
 #   image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)       
 #   image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
