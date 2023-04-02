@@ -42,16 +42,16 @@ MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
 MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
 DATASET_NAMES = ['DIC-C2DH-HeLa']
-TESTSET_NAMES = ['PhC-C2DL-PSC']
+TESTSET_NAMES = ['Fluo-N2DL-HeLa']
 TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02']
 TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG']
-TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/01', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/02']
-TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/02_ST/SEG']
-BATCH_SIZE = 1
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/02']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/02_ST/SEG']
+BATCH_SIZE = 8
 EPOCHS = 150
 LR = 0.001
-LOAD_MODEL = True
-TRAIN_MODEL = False
+LOAD_MODEL = False
+TRAIN_MODEL = True
 IMAGE_SIZE = 256
 OPTIMIZER = 'Adam'
 LOSS = sm.utils.losses.DiceLoss()
@@ -63,8 +63,8 @@ TRAIN_VAL_SPLIT = 0.8
 TEST_IMG = ''
 NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
-TEST_MODEL = True
-MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_epoch66.pth'
+TEST_MODEL = False
+MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_final_epoch.pth'
 RESULTS_PATH = '/content/TCC_Cell_Semantic_Segmentation/Results'
 
 def train_model(model, 
@@ -84,7 +84,7 @@ def train_model(model,
   ]
 
   optimizer = torch.optim.Adam([ 
-      dict(params=model.parameters(), lr=0.0001),
+      dict(params=model.parameters(), lr=0.001),
   ])
   # create epoch runners 
   # it is a simple loop of iterating over dataloader`s samples
