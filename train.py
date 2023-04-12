@@ -41,12 +41,36 @@ MAIN_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/IMAGES'
 MAIN_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/MASKS'
 MAIN_TEST_IMAGE_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_IMAGES'
 MAIN_TEST_MASK_DIR = '/content/TCC_Cell_Semantic_Segmentation/TEST_MASKS'
-DATASET_NAMES = ['DIC-C2DH-HeLa']
-TESTSET_NAMES = ['Fluo-N2DL-HeLa']
-TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02']
-TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG']
-TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/02']
-TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/02_ST/SEG']
+DATASET_NAMES = ['BF-C2DL-HSC', 
+                'BF-C2DL-MuSC',
+                'DIC-C2DH-HeLa',
+                'Fluo-C2DL-MSC',
+                'Fluo-N2DH-GOWT1',
+                'Fluo-N2DL-HeLa',
+                'PhC-C2DH-U373',
+                'PhC-C2DL-PSC']
+TESTSET_NAMES = ['Fluo-N2DH-SIM+']
+TRAIN_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-HSC/01', '/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-HSC/02',
+  '/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-MuSC/01', '/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-MuSC/02',
+  '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02',
+  '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02',
+  '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02',
+  '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/02',
+  '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/01', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/02',
+  '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/01', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/02',]
+TRAIN_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-HSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-HSC/02_ST/SEG',
+  '/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-MuSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/BF-C2DL-MuSC/02_ST/SEG',
+  '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG',
+  '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG',
+  '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02_ST/SEG',
+  '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DL-HeLa/02_ST/SEG',
+  '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DH-U373/02_ST/SEG',
+  '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/PhC-C2DL-PSC/02_ST/SEG',
+  ]
+TEST_IMG_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01',
+ '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02']
+TEST_MASK_DIRS = ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01_GT/SEG', 
+'/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02_GT/SEG']
 BATCH_SIZE = 8
 EPOCHS = 150
 LR = 0.001
@@ -64,7 +88,8 @@ TEST_IMG = ''
 NUM_CLASSES = 1
 ACTIVATION = "sigmoid"
 TEST_MODEL = False
-MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/ResultsCP_final_epoch.pth'
+PREDICT_MODEL = False
+MODEL_PATH = '/content/TCC_Cell_Semantic_Segmentation/base7_attempt1.pth'
 RESULTS_PATH = '/content/TCC_Cell_Semantic_Segmentation/Results'
 
 def train_model(model, 
@@ -112,7 +137,7 @@ def train_model(model,
   stop_count = 0
   for i in range(0, epochs):
       #Stop training early to avoid overfit
-      if stop_count == 5:
+      if stop_count == 10:
         print('Loss is not decreasing! Stopping training')
         break
 
@@ -125,11 +150,12 @@ def train_model(model,
         last_loss = valid_logs['dice_loss']
       else:
         current_loss = valid_logs['dice_loss']
-        if last_loss - current_loss < 0.001:
+        if not current_loss < last_loss:
           stop_count += 1
         else:
+          last_loss = current_loss
           stop_count = 0
-        last_loss = current_loss
+        
 
       # do something (save model, change lr, etc.)
       if max_score < valid_logs['iou_score']:
@@ -151,20 +177,56 @@ def train_model(model,
   torch.save(model.state_dict(),
                       RESULTS_PATH + f'CP_final_epoch.pth')
   logging.info(f'Last Checkpoint saved !')
-# def predict(model, image_path):
-#   image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)       
-#   image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))
-#   image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#   image = np.expand_dims(image, axis=0)
-#   prediction = model.predict(image)
-#   #View and Save segmented image  
-#   prediction_image = np.argmax(prediction, axis=3)[0,:,:]
-#   #prediction_image = prediction.reshape([256,256])
-#   #new_img = cv2.cvtColor(prediction_image, cv2.COLOR_BGR2RGB)
-#   plt.imshow(prediction_image, cmap='gray')
-#   prediction_image_name = 'test_' + os.path.basename(image_path[:-4]) + '.png' 
-#   output_path = os.path.join(RESULTS_PATH, prediction_image_name)
-#   plt.imsave(output_path, prediction_image, cmap='gray')
+
+# helper function for data visualization
+def visualize(index, **images):
+    """PLot images in one row."""
+    n = len(images)
+    plt.figure(figsize=(16, 5))
+    for i, (name, image) in enumerate(images.items()):
+        plt.subplot(1, n, i + 1)
+        plt.xticks([])
+        plt.yticks([])
+        plt.title(' '.join(name.split('_')).title())
+        plt.imsave(f"/content/TCC_Cell_Semantic_Segmentation/image_{index}_{i}.png", image)
+    plt.show()
+
+def predict(test_ds, best_model, device):
+
+  if isinstance(best_model, nn.DataParallel):
+    best_model = best_model.module
+  else:
+    best_model = best_model
+
+
+  for i in range(5):
+    n = np.random.choice(len(test_ds))
+    
+    image_vis = cv2.imread(test_ds.images_fps[n], cv2.IMREAD_UNCHANGED)
+    image_vis = cv2.resize(image_vis, (256, 256))
+    image_vis = cv2.cvtColor(image_vis, cv2.COLOR_GRAY2RGB)
+    image_vis = np.array(image_vis).astype(np.uint16)
+    image_vis = np.uint8((image_vis / image_vis.max()) * 255)
+
+    image, gt_mask = test_ds[n]
+    gt_mask = gt_mask.squeeze()
+    # image = cv2.imread('/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01/t000.tif', cv2.IMREAD_UNCHANGED)
+    # image = cv2.resize(image, (256,256))
+    # image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+    # image = np.array(image).astype(np.uint16)
+    # image = np.uint8((image / image.max()) * 255)
+    # mask = cv2.imread('/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG/man_seg000.tif', cv2.IMREAD_UNCHANGED)
+    # mask = cv2.resize(mask, (256,256))
+    # image_pr = image.transpose(2, 0, 1).astype('float32')
+    x_tensor = torch.from_numpy(image).to(device).unsqueeze(0)
+    pr_mask = best_model.predict(x_tensor)
+    pr_mask = (pr_mask.squeeze().cpu().numpy().round()) 
+        
+    visualize(index=i, 
+        image=image_vis, 
+        ground_truth_mask=gt_mask, 
+        predicted_mask=pr_mask
+    )
 
 def test_model(best_model, 
             device,
@@ -213,7 +275,7 @@ def main():
     shutil.rmtree(MAIN_TEST_MASK_DIR)
   os.mkdir(MAIN_TEST_MASK_DIR)
 
-  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=None, classes=NUM_CLASSES, activation=ACTIVATION)
+  model = sm.EfficientUnetPlusPlus(BACKBONE, encoder_weights=ENCODER_WEIGHTS, classes=NUM_CLASSES, activation=ACTIVATION)
 
 
   # Distribute training over GPUs
@@ -259,7 +321,7 @@ def main():
               )
 
   # If have a model ready to test
-  if TEST_MODEL:
+  if TEST_MODEL or PREDICT_MODEL:
     add_class_to_image_name(TESTSET_NAMES, 
     TEST_IMG_DIRS, 
     MAIN_TEST_IMAGE_DIR, 
@@ -275,7 +337,11 @@ def main():
         train_classes=TESTSET_NAMES,
         train_preprocessing=get_preprocessing(preprocessing_fn)
         )
-    test_model(best_model=model, device=device, test_set=test_ds)
+    if TEST_MODEL:
+      test_model(best_model=model, device=device, test_set=test_ds)
+    if PREDICT_MODEL:
+      predict(test_ds=test_ds, best_model=model, device=device)
+
 
   
 

@@ -68,7 +68,7 @@ def threshold_masks(dataset_names, mask_dir):
     for mask_fp in os.listdir(mask_dir):
       if d_name in mask_fp:
         mask = cv2.imread(mask_fp, cv2.IMREAD_UNCHANGED)
-        ret, mask = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
+        ret, mask = cv2.threshold(mask, 1, 1, cv2.THRESH_BINARY)
         cv2.imwrite(mask_fp, mask)
 
 

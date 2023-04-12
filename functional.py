@@ -11,13 +11,9 @@ import random
 ###############################################################################
 # This is the dataset that Cut mix samples images and masks from
 ###############################################################################
-dataset_img_dict = {'DIC-C2DH-HeLa' : ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02'],
-                 'Fluo-C2DL-MSC' : ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02'],
-                 'Fluo-N2DH-GOWT1' : ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02'],
+dataset_img_dict = {'Fluo-N2DH-SIM+' : ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02'],
                  }
-images_fp_dict = {'DIC-C2DH-HeLa' : [],
-                 'Fluo-C2DL-MSC' : [],
-                 'Fluo-N2DH-GOWT1' : [],
+images_fp_dict = {'Fluo-N2DH-SIM+' : [],                 
                  }
 img_list = []
 for key in dataset_img_dict:
@@ -27,13 +23,9 @@ for key in dataset_img_dict:
     img_list = [os.path.join(item, img) for img in img_list]
     images_fp_dict[key] += (img_list)
 
-dataset_mask_dict = {'DIC-C2DH-HeLa' : ['/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/DIC-C2DH-HeLa/02_ST/SEG'],
-                 'Fluo-C2DL-MSC' : ['/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-C2DL-MSC/02_ST/SEG'],
-                 'Fluo-N2DH-GOWT1' : ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/01_ST/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-GOWT1/02_ST/SEG'],
+dataset_mask_dict = {'Fluo-N2DH-SIM+' : ['/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/01_GT/SEG', '/content/TCC_Cell_Semantic_Segmentation/Fluo-N2DH-SIM+/02_GT/SEG'],
                  }
-masks_fp_dict = {'DIC-C2DH-HeLa' : [],
-                 'Fluo-C2DL-MSC' : [],
-                 'Fluo-N2DH-GOWT1' : [],
+masks_fp_dict = {'Fluo-N2DH-SIM+' : [],                 
                  }
 mask_list = []
 for key in dataset_mask_dict:
@@ -170,13 +162,17 @@ def generate_cutmix_image(image, **kwargs):
       # get image to sample cut from
       image_to_cut = cv2.imread(masks_fp_dict[rand_dataset][rand_index], cv2.IMREAD_UNCHANGED)
       image_to_cut = cv2.resize(image_to_cut, (256, 256))
+      ret, image_to_cut = cv2.threshold(image_to_cut, 1, 1, cv2.THRESH_BINARY)
       image_to_cut = np.expand_dims(image_to_cut, axis=-1)
       # paste cut to image
       image_updated[bbx1:bbx2, bby1:bby2,:] = image_to_cut[bbx1:bbx2, bby1:bby2, :]
     else:
       # get image to sample cut from
-      image_to_cut = cv2.imread(images_fp_dict[rand_dataset][rand_index])
+      image_to_cut = cv2.imread(images_fp_dict[rand_dataset][rand_index], cv2.IMREAD_UNCHANGED)
       image_to_cut = cv2.resize(image_to_cut, (256, 256))
+      image_to_cut = cv2.cvtColor(image_to_cut, cv2.COLOR_GRAY2RGB)
+      image_to_cut = np.array(image_to_cut).astype(np.uint16)
+      image_to_cut = np.uint8((image_to_cut / image_to_cut.max()) * 255)
       # paste cut to image
       image_updated[bbx1:bbx2, bby1:bby2, :] = image_to_cut[bbx1:bbx2, bby1:bby2, :]
     
